@@ -3,7 +3,8 @@
 
 # Atualizar e atualizar o sistema
 echo "Atualizando o sistema..."
-sudo apt update &>/dev/null && sudo apt upgrade -y &>/dev/null
+sudo apt update &>/dev/null
+sudo apt upgrade -y &>/dev/null
 
 # Definir o nome do host como 'compute1'
 echo "Definindo o hostname como 'compute1'..."
@@ -14,8 +15,13 @@ echo "Adicionando entradas no /etc/hosts..."
 sudo bash -c 'cat <<EOF > /etc/hosts
 127.0.0.1	localhost
 192.168.1.10	controller
-192.168.1.20	compute1
-192.168.1.30	storage
+192.168.1.21	compute1
+192.168.1.22	compute2
+192.168.1.23	compute3
+192.168.1.24	compute4
+192.168.1.31	storage1
+192.168.1.32	storage2
+192.168.1.33	storage3
 EOF'
 
 # Configurar o fuso horário para America/Sao_Paulo
@@ -29,7 +35,7 @@ network:
     ethernets:
         enp0s3:
             addresses:
-            - 192.168.1.20/24
+            - 192.168.1.21/24
             nameservers:
                 addresses:
                 - 181.213.132.2
@@ -59,7 +65,7 @@ network:
 EOF'
 
 # Desabilitar configuração de rede no /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
-echo "Desabilitando a configuração de rede no /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg..."
+echo "Desabilitando a configuração de rede do cloud init no arquivo /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg..."
 sudo bash -c 'cat <<EOF > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
 network: {config: disabled}
 EOF'
@@ -120,7 +126,7 @@ sudo bash -c 'cat <<EOF > /etc/nova/nova.conf
 log_dir = /var/log/nova
 lock_path = /var/lock/nova
 state_path = /var/lib/nova
-my_ip = 192.168.1.20
+my_ip = 192.168.1.21
 transport_url = rabbit://openstack:admin@controller:5672/
 [api]
 auth_strategy = keystone
@@ -220,7 +226,7 @@ echo "Configurando o arquivo /etc/neutron/plugins/ml2/openvswitch_agent.ini..."
 sudo bash -c 'cat <<EOF > /etc/neutron/plugins/ml2/openvswitch_agent.ini
 [ovs]
 bridge_mappings = provider:br-provider
-local_ip = 192.168.1.20
+local_ip = 192.168.1.21
 
 [agent]
 tunnel_types = vxlan

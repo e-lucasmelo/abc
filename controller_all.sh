@@ -14,8 +14,13 @@ echo "Adicionando entradas no /etc/hosts..."
 sudo bash -c 'cat <<EOF > /etc/hosts
 127.0.0.1	localhost
 192.168.1.10	controller
-192.168.1.20	compute1
-192.168.1.30	storage
+192.168.1.21	compute1
+192.168.1.22	compute2
+192.168.1.23	compute3
+192.168.1.24	compute4
+192.168.1.31	storage1
+192.168.1.32	storage2
+192.168.1.33	storage3
 EOF'
 
 # Configurar o fuso horário para America/Sao_Paulo
@@ -107,6 +112,7 @@ sudo add-apt-repository -y cloud-archive:caracal &>/dev/null
 # Instalar os pacotes necessários
 echo "Instalando nova-compute..."
 sudo apt install nova-compute -y &>/dev/null
+sudo systemctl disable --now nova-compute
 echo "Instalando python3-openstackclient..."
 sudo apt install python3-openstackclient -y &>/dev/null
 echo "Instalando mariadb-server python3-pymysql..."

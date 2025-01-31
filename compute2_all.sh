@@ -14,9 +14,13 @@ echo "Adicionando entradas no /etc/hosts..."
 sudo bash -c 'cat <<EOF > /etc/hosts
 127.0.0.1	localhost
 192.168.1.10	controller
-192.168.1.20	compute1
-192.168.1.21	compute2
-192.168.1.30	storage
+192.168.1.21	compute1
+192.168.1.22	compute2
+192.168.1.23	compute3
+192.168.1.24	compute4
+192.168.1.31	storage1
+192.168.1.32	storage2
+192.168.1.33	storage3
 EOF'
 
 # Configurar o fuso horário para America/Sao_Paulo
@@ -30,7 +34,7 @@ network:
     ethernets:
         enp0s3:
             addresses:
-            - 192.168.1.21/24
+            - 192.168.1.22/24
             nameservers:
                 addresses:
                 - 181.213.132.2
@@ -108,8 +112,6 @@ sudo apt update &>/dev/null
 sudo apt install nova-compute -y &>/dev/null
 sudo apt install python3-openstackclient -y &>/dev/null
 
-echo "configuração inicial finalizada"
-
 # Instalar os pacotes do Nova
 echo "Instalando o Nova-compute..."
 sudo apt install nova-compute -y &>/dev/null
@@ -121,7 +123,7 @@ sudo bash -c 'cat <<EOF > /etc/nova/nova.conf
 log_dir = /var/log/nova
 lock_path = /var/lock/nova
 state_path = /var/lib/nova
-my_ip = 192.168.1.21
+my_ip = 192.168.1.22
 transport_url = rabbit://openstack:admin@controller:5672/
 [api]
 auth_strategy = keystone
@@ -221,7 +223,7 @@ echo "Configurando o arquivo /etc/neutron/plugins/ml2/openvswitch_agent.ini..."
 sudo bash -c 'cat <<EOF > /etc/neutron/plugins/ml2/openvswitch_agent.ini
 [ovs]
 bridge_mappings = provider:br-provider
-local_ip = 192.168.1.21
+local_ip = 192.168.1.22
 
 [agent]
 tunnel_types = vxlan

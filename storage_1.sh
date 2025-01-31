@@ -13,9 +13,13 @@ echo "configurando hosts"
 # Configurar /etc/hosts
 cat <<EOF | sudo tee /etc/hosts
 127.0.0.1   localhost
-192.168.1.10   controller
-192.168.1.20   compute1
-192.168.1.30   storage
+192.168.1.21	compute1
+192.168.1.22	compute2
+192.168.1.23	compute3
+192.168.1.24	compute4
+192.168.1.31	storage1
+192.168.1.32	storage2
+192.168.1.33	storage3
 EOF
 
 echo "ajustando fuso horario"
@@ -24,12 +28,12 @@ sudo timedatectl set-timezone America/Sao_Paulo
 
 echo "configurando rede"
 # Configurar rede
-cat <<EOF | sudo tee /etc/netplan/50-cloud-init.yaml
+sudo bash -c 'cat <<EOF > /etc/netplan/50-cloud-init.yaml
 network:
     ethernets:
         enp0s3:
             addresses:
-            - 192.168.1.30/24
+            - 192.168.1.31/24
             nameservers:
                 addresses:
                 - 181.213.132.2
@@ -52,28 +56,31 @@ network:
             dhcp6: false
             accept-ra: no
         enp0s9:
-            addresses: 
-            - 192.168.0.85/24
+            dhcp4: true
             dhcp6: false
             accept-ra: no
     version: 2
-EOF
+EOF'
 
 echo "ajustando para configurações serem permanentes"
 # Desabilitar configuração de rede do cloud-init
-cat <<EOF | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+echo "Desabilitando a configuração de rede no /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg..."
+sudo bash -c 'cat <<EOF > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
 network: {config: disabled}
-EOF
+EOF'
 
 echo "aplicando alteração"
 # Aplicar configurações de rede
 sudo netplan apply
 
 
-echo "instalando chrony"
-# Instalar e configurar Chrony
+# Instalar o Chrony e configurar o servidor NTP
+echo "Instalando o Chrony..."
 sudo apt install chrony -y &>/dev/null
-cat <<EOF | sudo tee /etc/chrony/chrony.conf
+
+# Configurar o arquivo de configuração do Chrony
+echo "Configurando o arquivo /etc/chrony/chrony.conf..."
+sudo bash -c 'cat <<EOF > /etc/chrony/chrony.conf
 server controller iburst
 confdir /etc/chrony/conf.d
 sourcedir /run/chrony-dhcp
@@ -86,12 +93,26 @@ maxupdateskew 100.0
 rtcsync
 makestep 1 3
 leapsectz right/UTC
-EOF
+EOF'
 
-echo "reiniciando chrony"
-# Reiniciar Chrony
+# Reiniciar o serviço Chrony
+echo "Reiniciando o serviço Chrony..."
 sudo service chrony restart
+
+# Verificar as fontes do Chrony
+echo "Verificando fontes do Chrony..."
 sudo chronyc sources
+
+# Adicionar o repositório do OpenStack Caracal
+echo "Adicionando o repositório do OpenStack Caracal..."
+sudo add-apt-repository -y cloud-archive:caracal &>/dev/null
+
+# Instalar os pacotes necessários
+echo "Instalando pacotes OpenStack..."
+sudo apt update &>/dev/null
+sudo apt install nova-compute -y &>/dev/null
+sudo systemctl disable --now nova-compute
+sudo apt install python3-openstackclient -y &>/dev/null
 
 echo "instalação do LVM"
 # Configurar LVM
@@ -205,11 +226,12 @@ EOF'
 echo "instalando e configurando os parametros do Cinder"
 # Instalar e configurar Cinder
 sudo apt install cinder-volume tgt -y &>/dev/null
-cat <<EOF | sudo tee /etc/cinder/cinder.conf
+
+sudo bash -c 'cat <<EOF > /etc/cinder/cinder.conf
 [DEFAULT]
 transport_url = rabbit://openstack:admin@controller
 auth_strategy = keystone
-my_ip = 192.168.1.30
+my_ip = 192.168.1.31
 enabled_backends = lvm
 glance_api_servers = http://controller:9292
 rootwrap_config = /etc/cinder/rootwrap.conf
@@ -244,13 +266,13 @@ target_helper = tgtadm
 
 [oslo_concurrency]
 lock_path = /var/lib/cinder/tmp
-EOF
+EOF'
 
 echo "configuração de tgt"
 # Configurar tgt
-cat <<EOF | sudo tee /etc/tgt/conf.d/cinder.conf
+sudo bash -c 'cat <<EOF > /etc/tgt/conf.d/cinder.conf
 include /var/lib/cinder/volumes/*
-EOF
+EOF'
 
 echo "reiniciar serviços"
 # Reiniciar serviços
