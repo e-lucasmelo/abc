@@ -151,7 +151,7 @@ password = admin
 [vnc]
 enabled = true
 server_listen = 0.0.0.0
-server_proxyclient_address = $my_ip
+server_proxyclient_address = \$my_ip
 novncproxy_base_url = http://controller:6080/vnc_auto.html
 
 [glance]

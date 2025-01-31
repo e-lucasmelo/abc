@@ -105,8 +105,6 @@ echo "Adicionando o repositório do OpenStack Caracal..."
 sudo add-apt-repository -y cloud-archive:caracal &>/dev/null
 
 # Instalar os pacotes necessários
-echo "verificando atualizações..."
-sudo apt update &>/dev/null
 echo "Instalando nova-compute..."
 sudo apt install nova-compute -y &>/dev/null
 echo "Instalando python3-openstackclient..."
@@ -1000,8 +998,6 @@ password = admin
 
 [oslo_concurrency]
 lock_path = /var/lib/cinder/tmp
-
-[DEFAULT]
 EOF'
 
 echo "sincronizando banco de dados Cinder"

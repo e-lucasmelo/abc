@@ -205,7 +205,7 @@ EOF'
 echo "instalando e configurando os parametros do Cinder"
 # Instalar e configurar Cinder
 sudo apt install cinder-volume tgt -y &>/dev/null
-cat <<EOF | sudo tee  /etc/cinder/cinder.conf
+cat <<EOF | sudo tee /etc/cinder/cinder.conf
 [DEFAULT]
 transport_url = rabbit://openstack:admin@controller
 auth_strategy = keystone
