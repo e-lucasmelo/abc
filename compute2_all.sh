@@ -5,9 +5,9 @@
 echo "Atualizando o sistema..."
 sudo apt update &>/dev/null && sudo apt upgrade -y &>/dev/null
 
-# Definir o nome do host como 'compute1'
-echo "Definindo o hostname como 'compute1'..."
-sudo hostnamectl set-hostname compute1
+# Definir o nome do host como 'compute2'
+echo "Definindo o hostname como 'compute2'..."
+sudo hostnamectl set-hostname compute2
 
 # Editar o arquivo /etc/hosts
 echo "Adicionando entradas no /etc/hosts..."
