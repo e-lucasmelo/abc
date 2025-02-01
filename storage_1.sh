@@ -7,7 +7,7 @@ sudo apt upgrade -y &>/dev/null
 
 echo "alterando hostname"
 # Definir o nome do host
-sudo hostnamectl set-hostname storage
+sudo hostnamectl set-hostname storage1
 
 echo "configurando hosts"
 # Configurar /etc/hosts
