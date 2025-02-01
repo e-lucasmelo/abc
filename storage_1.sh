@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Atualizar pacotes
-echo "atualizando server"
+echo "Atualizando o sistema..."
 sudo apt update &>/dev/null
 sudo apt upgrade -y &>/dev/null
 
@@ -11,8 +11,9 @@ sudo hostnamectl set-hostname storage1
 
 echo "configurando hosts"
 # Configurar /etc/hosts
-cat <<EOF | sudo tee /etc/hosts
+sudo bash -c 'cat <<EOF > /etc/hosts
 127.0.0.1   localhost
+192.168.1.10    controller
 192.168.1.21	compute1
 192.168.1.22	compute2
 192.168.1.23	compute3
@@ -20,7 +21,7 @@ cat <<EOF | sudo tee /etc/hosts
 192.168.1.31	storage1
 192.168.1.32	storage2
 192.168.1.33	storage3
-EOF
+EOF'
 
 echo "ajustando fuso horario"
 # Ajustar o timezone
