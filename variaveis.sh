@@ -17,3 +17,11 @@ storage1=("storage1" "${gerenciamento}.31" "${ipAcessoVM}.131/24")
 storage2=("storage2" "${gerenciamento}.32" "${ipAcessoVM}.132/24")
 storage3=("storage3" "${gerenciamento}.33" "${ipAcessoVM}.133/24")
 senha="admin"
+
+# para a rede provider
+#altere conforme a sua rede
+ip_inicio="192.168.0.100"
+ip_fim="192.168.0.130"
+gateway_provider="192.168.0.1"
+dns_provider="192.168.0.1"
+subnet_provider="192.168.0.0/24"
