@@ -112,14 +112,16 @@ Todas as VMs devem ter **virtualização aninhada** habilitada.
 
 ## Acesso ao OpenStack
 
-Se tudo correu bem, o OpenStack estará acessível pelo Horizon via navegador, usando a rede bridge. O IP padrão definido nos scripts é:
+no windows altere o arquivo host inserindo o ip definido para a rede bridge.
 
-- **192.168.0.111**
+   ```'C:\Windows\System32\drivers\etc'
+   192.168.0.111  controller
+   ```
 
-Acesse via navegador:
+Se tudo correu bem, o OpenStack estará acessível pelo Horizon via navegador, usando a rede bridge:
 
 ```
-http://192.168.0.111/horizon/
+http://controller/horizon/
 ```
 
 Agora seu OpenStack está pronto para uso! 🎉
