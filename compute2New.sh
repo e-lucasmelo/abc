@@ -7,9 +7,9 @@ echo "Atualizando o sistema..."
 sudo apt update &>/dev/null
 sudo apt upgrade -y &>/dev/null
 
-# Definir o nome do host como 'compute1'
-echo "Definindo o hostname como '${compute1[0]}'..."
-sudo hostnamectl set-hostname ${compute1[0]}
+# Definir o nome do host como 'compute2'
+echo "Definindo o hostname como '${compute2[0]}'..."
+sudo hostnamectl set-hostname ${compute2[0]}
 
 # Editar o arquivo /etc/hosts
 echo "Adicionando entradas no /etc/hosts..."
@@ -27,7 +27,7 @@ EOF"
 if [ -n "$interfaceAdicional" ]; then
 i="        $interfaceAdicional:
             addresses:
-            - ${compute1[2]}
+            - ${compute2[2]}
             dhcp6: false
             accept-ra: no
 "
@@ -42,7 +42,7 @@ network:
     ethernets:
         enp0s3:
             addresses:
-            - ${compute1[1]}/24
+            - ${compute2[1]}/24
             nameservers:
                 addresses:
                 - ${dns[0]}
@@ -128,7 +128,7 @@ sudo bash -c "cat <<EOF > /etc/nova/nova.conf
 log_dir = /var/log/nova
 lock_path = /var/lock/nova
 state_path = /var/lib/nova
-my_ip = ${compute1[1]}
+my_ip = ${compute2[1]}
 transport_url = rabbit://openstack:$senha@${controller[0]}:5672/
 [api]
 auth_strategy = keystone
@@ -159,7 +159,7 @@ password = $senha
 [vnc]
 enabled = true
 server_listen = 0.0.0.0
-server_proxyclient_address = ${compute1[1]}
+server_proxyclient_address = ${compute2[1]}
 novncproxy_base_url = http://${controller[0]}:6080/vnc_auto.html
 
 [glance]
@@ -228,7 +228,7 @@ echo "Configurando o arquivo /etc/neutron/plugins/ml2/openvswitch_agent.ini..."
 sudo bash -c "cat <<EOF > /etc/neutron/plugins/ml2/openvswitch_agent.ini
 [ovs]
 bridge_mappings = provider:br-provider
-local_ip = ${compute1[1]}
+local_ip = ${compute2[1]}
 
 [agent]
 tunnel_types = vxlan
