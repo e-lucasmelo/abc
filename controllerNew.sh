@@ -1,5 +1,3 @@
-#novoScript.sh
-
 #!/bin/bash
 
 source variaveis.sh

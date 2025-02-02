@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source variaveis.sh
+
 # Atualizar pacotes
 echo "atualizando server"
 sudo apt update &>/dev/null
@@ -13,7 +15,7 @@ sudo hostnamectl set-hostname ${compute1[0]}
 echo "Adicionando entradas no /etc/hosts..."
 sudo bash -c "cat <<EOF > /etc/hosts
 127.0.0.1	localhost
-${controller[1]}	${controller[0]}
+${controller[1]}        ${controller[0]}
 ${compute1[1]}	${compute1[0]}
 ${compute2[1]}	${compute2[0]}
 ${compute3[1]}	${compute3[0]}

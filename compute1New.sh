@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source variaveis.sh
 
 # Atualizar e atualizar o sistema
 echo "Atualizando o sistema..."
