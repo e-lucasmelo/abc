@@ -208,14 +208,14 @@ sudo apt install keystone -y &>/dev/null
 
 # Configuração do Keystone
 echo "Configurando o arquivo /etc/keystone/keystone.conf..."
-sudo bash -c 'cat <<EOF > /etc/keystone/keystone.conf
+sudo bash -c "cat <<EOF > /etc/keystone/keystone.conf
 [DEFAULT]
 log_dir = /var/log/keystone
 [database]
 connection = mysql+pymysql://keystone:$senha@${controller[0]}/keystone
 [token]
 provider = fernet
-EOF'
+EOF"
 
 # Sincronizar o banco de dados do Keystone
 echo "Sincronizando o banco de dados do Keystone..."
