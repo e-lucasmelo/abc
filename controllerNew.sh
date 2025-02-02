@@ -1026,3 +1026,5 @@ sudo nova-status upgrade check
 echo "Verificando extensões de rede e agentes de rede do Neutron..."
 openstack extension list --network
 openstack network agent list
+
+echo "configuração concluída!"
