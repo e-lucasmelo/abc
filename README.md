@@ -126,3 +126,9 @@ http://controller/horizon/
 
 Agora seu OpenStack está pronto para uso! 🎉
 
+### Canais do youtube que foram de ajuda:
+
+- Curso de openstack, Mateus Miller: https://www.youtube.com/watch?v=deiPxC8SOZk&list=PL0zspxm7AK_DsypYjkFVEU7ZxPn5gReKF
+- Openstack Manual, Daniel Persson: https://www.youtube.com/watch?v=teWgCm6Aq1c&list=PLP2v7zU48xOJbK1HeOPxoBaxqBKtOAJB8
+- Complete openstack tutorial, MrFares, https://www.youtube.com/playlist?list=PLwPU5FTUL-DbftrOlnfuDfNj0QlgQNFRL
+
