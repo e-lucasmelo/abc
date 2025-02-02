@@ -7,9 +7,9 @@ echo "atualizando server"
 sudo apt update &>/dev/null
 sudo apt upgrade -y &>/dev/null
 
-# Definir o nome do host como 'storage1'
-echo "Definindo o hostname como '${storage1[0]}'..."
-sudo hostnamectl set-hostname ${storage1[0]}
+# Definir o nome do host como 'storage2'
+echo "Definindo o hostname como '${storage2[0]}'..."
+sudo hostnamectl set-hostname ${storage2[0]}
 
 # Editar o arquivo /etc/hosts
 echo "Adicionando entradas no /etc/hosts..."
@@ -27,7 +27,7 @@ EOF"
 if [ -n "$interfaceAdicional" ]; then
 i="        $interfaceAdicional:
             addresses:
-            - ${storage1[2]}
+            - ${storage2[2]}
             dhcp6: false
             accept-ra: no
 "
@@ -241,7 +241,7 @@ sudo bash -c "cat <<EOF > /etc/cinder/cinder.conf
 [DEFAULT]
 transport_url = rabbit://openstack:$senha@${controller[0]}
 auth_strategy = keystone
-my_ip = ${storage1[1]}
+my_ip = ${storage2[1]}
 enabled_backends = lvm
 glance_api_servers = http://${controller[0]}:9292
 rootwrap_config = /etc/cinder/rootwrap.conf
