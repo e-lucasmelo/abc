@@ -92,7 +92,6 @@ echo "Configurando o arquivo /etc/chrony/chrony.conf..."
 sudo bash -c "cat <<EOF > /etc/chrony/chrony.conf
 server ${controller[0]} iburst
 confdir /etc/chrony/conf.d
-pool ntp.ubuntu.com        iburst maxsources 4
 sourcedir /run/chrony-dhcp
 sourcedir /etc/chrony/sources.d
 keyfile /etc/chrony/chrony.keys
