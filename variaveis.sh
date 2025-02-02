@@ -3,11 +3,11 @@
 #defina a rede de gerenciamento
 arquivoNetplan="/etc/netplan/50-cloud-init.yaml"
 gerenciamento="192.168.1" # sem a parte final, será definida mais a frente.
-ipAcessoVM="192.168.0" # sem a parte final, será definida mais a frente
+ipAcessoVM="192.168.0" # ip da rede bridge, sem a parte final, será definida mais a frente
 dns=("181.213.132.2" "181.213.132.3")
 interfaceGerencia="enp0s3" # interface de gerenciamento
 interfaceProvider="enp0s8" # interface da rede provider do openstack
-interfaceAdicional="enp0s9" # interface adicional para usar no virtualbox, deixar em branco se não usar.
+interfaceAdicional="enp0s9" # interface adicional(bridge) para usar no virtualbox, deixar em branco se não usar.
 gateway_gerencia="${gerenciamento}.1"
 controller=("controller" "${gerenciamento}.11" "${ipAcessoVM}.111/24") #("host" "ip_host" "ip_acesso_vm")
 compute1=("compute1" "${gerenciamento}.21" "${ipAcessoVM}.111/24")
