@@ -117,6 +117,8 @@ sudo add-apt-repository -y cloud-archive:caracal &>/dev/null
 
 echo "Instalando nova-compute..."
 sudo apt install nova-compute -y &>/dev/null
+echo "desabilitando apenas o serviço do nova-compute..."
+sudo systemctl disable --now nova-compute
 echo "Instalando python3-openstackclient..."
 sudo apt install python3-openstackclient -y &>/dev/null
 
