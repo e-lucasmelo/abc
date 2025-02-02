@@ -674,17 +674,6 @@ sudo service nova-scheduler restart
 sudo service nova-conductor restart
 sudo service nova-novncproxy restart
 
-
-echo "Carregando variáveis de ambiente do OpenStack..."
-. admin-openrc
-sudo nova-manage cell_v2 discover_hosts --verbose
-
-echo "verificar funcionamento"
-openstack compute service list
-openstack catalog list
-openstack image list
-sudo nova-status upgrade check
-
 echo "Configurando o banco de dados MySQL para o Neutron..."
 sudo mysql <<EOF
 CREATE DATABASE neutron;
@@ -817,13 +806,6 @@ sudo service neutron-openvswitch-agent restart
 sudo service neutron-dhcp-agent restart
 sudo service neutron-metadata-agent restart
 sudo service neutron-l3-agent restart
-
-echo "Carregando variáveis de ambiente do OpenStack..."
-. admin-openrc
-
-echo "Verificando extensões de rede e agentes de rede do OpenStack..."
-openstack extension list --network
-openstack network agent list
 
 echo "Instalando o Horizon (OpenStack Dashboard)..."
 sudo apt install openstack-dashboard -y &>/dev/null
@@ -1028,3 +1010,19 @@ sudo service apache2 restart
 echo "configuração do Cinder finalizada"
 echo "configurar o nó de storage"
 ##fazer a parte do storage e quando terminar voltar aqui
+
+echo "Carregando variáveis de ambiente do OpenStack..."
+. admin-openrc
+
+echo "verificando os hosts compute..."
+sudo nova-manage cell_v2 discover_hosts --verbose
+
+echo "verificar a lista de serviços, catálogo e imagem"
+openstack compute service list
+openstack catalog list
+openstack image list
+sudo nova-status upgrade check
+
+echo "Verificando extensões de rede e agentes de rede do Neutron..."
+openstack extension list --network
+openstack network agent list
