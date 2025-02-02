@@ -233,29 +233,29 @@ sudo keystone-manage fernet_setup --keystone-user keystone --keystone-group keys
 echo "Configurando as credenciais do Keystone..."
 sudo keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 
-# # Realizar o bootstrap do Keystone
-# echo "Realizando o bootstrap do Keystone..."
-# sudo keystone-manage bootstrap --bootstrap-password $senha \
-#   --bootstrap-admin-url http://${controller[0]}:5000/v3/ \
-#   --bootstrap-internal-url http://${controller[0]}:5000/v3/ \
-#   --bootstrap-public-url http://${controller[0]}:5000/v3/ \
-#   --bootstrap-region-id RegionOne
+# Realizar o bootstrap do Keystone
+echo "Realizando o bootstrap do Keystone, criando usuario e endpoints..."
+sudo keystone-manage bootstrap --bootstrap-password $senha \
+  --bootstrap-admin-url http://${controller[0]}:5000/v3/ \
+  --bootstrap-internal-url http://${controller[0]}:5000/v3/ \
+  --bootstrap-public-url http://${controller[0]}:5000/v3/ \
+  --bootstrap-region-id RegionOne
 
 
-echo "criando região..."
-openstack region create RegionOne
-echo "criando usuário admin no dominio default..."
-openstack user create --domain default --password $senha admin
-echo "adicionando o usuário admin para o projeto admin..."
-openstack role add --project admin --user admin admin
-echo "criando o serviço para o Keystone..."
-openstack service create --name keystone --description "OpenStack Identity" identity
-echo "criando endpoint admin..."
-openstack endpoint create --region RegionOne identity admin http://${controller[0]}:5000/v3/
-echo "criando endpoint internal..."
-openstack endpoint create --region RegionOne identity internal http://${controller[0]}:5000/v3/
-echo "criando endpoint public..."
-openstack endpoint create --region RegionOne identity public http://${controller[0]}:5000/v3/
+# echo "criando região..."
+# openstack region create RegionOne
+# echo "criando usuário admin no dominio default..."
+# openstack user create --domain default --password $senha admin
+# echo "adicionando o usuário admin para o projeto admin..."
+# openstack role add --project admin --user admin admin
+# echo "criando o serviço para o Keystone..."
+# openstack service create --name keystone --description "OpenStack Identity" identity
+# echo "criando endpoint admin..."
+# openstack endpoint create --region RegionOne identity admin http://${controller[0]}:5000/v3/
+# echo "criando endpoint internal..."
+# openstack endpoint create --region RegionOne identity internal http://${controller[0]}:5000/v3/
+# echo "criando endpoint public..."
+# openstack endpoint create --region RegionOne identity public http://${controller[0]}:5000/v3/
 
 
 # Configuração do Apache para o Keystone
