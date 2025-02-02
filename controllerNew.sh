@@ -81,7 +81,6 @@ EOF'
 echo "Aplicando configurações do Netplan..."
 sudo netplan apply
 
-
 # Instalar o Chrony e configurar o servidor NTP
 echo "Instalando o Chrony..."
 sudo apt install chrony -y &>/dev/null
@@ -151,8 +150,8 @@ sudo apt install rabbitmq-server -y &>/dev/null
 
 # Configurar o RabbitMQ
 echo "Configurando o RabbitMQ..."
-sudo rabbitmqctl add_user openstack $senha
-sudo rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+sudo rabbitmqctl add_user openstack $senha &>/dev/null
+sudo rabbitmqctl set_permissions openstack ".*" ".*" ".*" &>/dev/null
 
 # Instalar o Memcached
 echo "Instalando o Memcached..."
@@ -194,8 +193,9 @@ EOF"
 
 
 # Habilitar e reiniciar o serviço etcd
-echo "Habilitando e reiniciando o serviço etcd..."
-sudo systemctl enable etcd
+echo "Habilitando o serviço etcd..."
+sudo systemctl enable etcd &>/dev/null
+echo "Reiniciando o serviço etcd..."
 sudo systemctl restart etcd
 
 # Configuração do banco de dados MySQL
@@ -233,16 +233,33 @@ sudo keystone-manage fernet_setup --keystone-user keystone --keystone-group keys
 echo "Configurando as credenciais do Keystone..."
 sudo keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 
-# Realizar o bootstrap do Keystone
-echo "Realizando o bootstrap do Keystone..."
-sudo keystone-manage bootstrap --bootstrap-password $senha \
-  --bootstrap-admin-url http://${controller[0]}:5000/v3/ \
-  --bootstrap-internal-url http://${controller[0]}:5000/v3/ \
-  --bootstrap-public-url http://${controller[0]}:5000/v3/ \
-  --bootstrap-region-id RegionOne
+# # Realizar o bootstrap do Keystone
+# echo "Realizando o bootstrap do Keystone..."
+# sudo keystone-manage bootstrap --bootstrap-password $senha \
+#   --bootstrap-admin-url http://${controller[0]}:5000/v3/ \
+#   --bootstrap-internal-url http://${controller[0]}:5000/v3/ \
+#   --bootstrap-public-url http://${controller[0]}:5000/v3/ \
+#   --bootstrap-region-id RegionOne
+
+
+echo "criando região..."
+openstack region create RegionOne
+echo "criando usuário admin no dominio default..."
+openstack user create --domain default --password $senha admin
+echo "adicionando o usuário admin para o projeto admin..."
+openstack role add --project admin --user admin admin
+echo "criando o serviço para o Keystone..."
+openstack service create --name keystone --description "OpenStack Identity" identity
+echo "criando endpoint admin..."
+openstack endpoint create --region RegionOne identity admin http://${controller[0]}:5000/v3/
+echo "criando endpoint internal..."
+openstack endpoint create --region RegionOne identity internal http://${controller[0]}:5000/v3/
+echo "criando endpoint public..."
+openstack endpoint create --region RegionOne identity public http://${controller[0]}:5000/v3/
+
 
 # Configuração do Apache para o Keystone
-echo "Configurando o Apache para o Keystone..."
+echo "Configurando o arquivo /etc/apache2/apache2.conf..."
 
 sudo tee /etc/apache2/apache2.conf > /dev/null <<EOF
 DefaultRuntimeDir \${APACHE_RUN_DIR}
@@ -315,7 +332,7 @@ EOF
 
 
 # Reiniciar o Apache
-echo "Reiniciando o Apache..."
+echo "Reiniciando o Apache/Keystone..."
 sudo service apache2 restart
 
 # Configurar as variáveis de ambiente
@@ -329,11 +346,15 @@ export OS_AUTH_URL=http://${controller[0]}:5000/v3
 export OS_IDENTITY_API_VERSION=3
 
 # Criar projetos e usuários no OpenStack
-echo "Criando projetos e usuários..."
+echo "configurando projeto dos serviços..."
 openstack project create --domain default --description "Service Project" service
+echo "configurando projeto de demo..."
 openstack project create --domain default --description "Demo Project" myproject
+echo "configurando usuário myuser ..."
 openstack user create --domain default --password "$senha" myuser
+echo "configurando a função de usuário myrole..."
 openstack role create myrole
+echo "configurando usuário myuser na função myrole..."
 openstack role add --project myproject --user myuser myrole
 
 # Desconfigurar variáveis de ambiente
@@ -341,15 +362,15 @@ openstack role add --project myproject --user myuser myrole
 #unset OS_AUTH_URL OS_PASSWORD
 
 # Obter o token de administrador
-echo "Obtendo o token de administrador..."
+echo "testando obtenção de token de administrador..."
 openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name admin --os-username admin token issue
 
 # Obter o token do usuário demo
-echo "Obtendo o token do usuário demo..."
+echo "testando obtenção de token do usuário myrole..."
 openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name myproject --os-username myuser token issue
 
 # Criar arquivos admin-openrc e demo-openrc
-echo "Criando arquivos admin-openrc e demo-openrc..."
+echo "Criando arquivos admin-openrc..."
 echo "export OS_PROJECT_DOMAIN_NAME=Default
 export OS_USER_DOMAIN_NAME=Default
 export OS_PROJECT_NAME=admin
@@ -357,8 +378,9 @@ export OS_USERNAME=admin
 export OS_PASSWORD=$senha
 export OS_AUTH_URL=http://${controller[0]}:5000/v3
 export OS_IDENTITY_API_VERSION=3
-export OS_IMAGE_API_VERSION=2" | sudo tee admin-openrc
+export OS_IMAGE_API_VERSION=2" | sudo tee admin-openrc &>/dev/null
 
+echo "Criando arquivo demo-openrc..."
 echo "export OS_PROJECT_DOMAIN_NAME=Default
 export OS_USER_DOMAIN_NAME=Default
 export OS_PROJECT_NAME=myproject
@@ -366,10 +388,10 @@ export OS_USERNAME=myuser
 export OS_PASSWORD=$senha
 export OS_AUTH_URL=http://${controller[0]}:5000/v3
 export OS_IDENTITY_API_VERSION=3
-export OS_IMAGE_API_VERSION=2" | sudo tee demo-openrc
+export OS_IMAGE_API_VERSION=2" | sudo tee demo-openrc &>/dev/null
 
 # Carregar o arquivo admin-openrc e obter o token
-echo "Carregando admin-openrc e obtendo o token..."
+echo "Carregando admin-openrc e testando obtenção  do token..."
 . admin-openrc
 openstack token issue
 
@@ -387,8 +409,9 @@ echo "Carregando variáveis de ambiente do OpenStack..."
 . admin-openrc
 
 # Criar o usuário Glance e atribuir permissões
-echo "Criando usuário Glance e atribuindo permissões..."
+echo "Configurando usuário Glance ..."
 openstack user create --domain default --password "$senha" glance
+echo "configurando usuário Glance no projeto de serviço..."
 openstack role add --project service --user glance admin
 
 # Criar o serviço Glance
@@ -396,9 +419,11 @@ echo "Criando serviço Glance..."
 openstack service create --name glance --description "OpenStack Image" image
 
 # Criar os endpoints de imagem
-echo "Criando endpoints de imagem..."
+echo "Criando endpoint public..."
 openstack endpoint create --region RegionOne image public http://${controller[0]}:9292
+echo "Criando endpoint internal..."
 openstack endpoint create --region RegionOne image internal http://${controller[0]}:9292
+echo "Criando endpoint admin..."
 openstack endpoint create --region RegionOne image admin http://${controller[0]}:9292
 
 # Instalar o Glance
@@ -440,7 +465,7 @@ region_name = RegionOne
 EOF"
 
 # Obter o ID do endpoint público de imagem
-echo "Obtendo o ID do endpoint público de imagem..."
+echo "Obtendo o ID do endpoint public de imagem..."
 public_image_endpoint_id=$(openstack endpoint list --service image --interface public -f value -c ID)
 
 # Atualizar o arquivo de configuração com o ID do endpoint público
@@ -453,18 +478,21 @@ openstack role add --user glance --user-domain Default --system all reader
 
 # Sincronizar o banco de dados do Glance
 echo "Sincronizando o banco de dados do Glance..."
-sudo glance-manage db_sync
+sudo glance-manage db_sync &>/dev/null
 
 # Reiniciar o serviço Glance API
 echo "Reiniciando o serviço Glance API..."
 sudo service glance-api restart
 
 # Carregar novamente variáveis de ambiente
+echo "Carregando variáveis de ambiente do openstack..."
 . admin-openrc
 
 # Baixar a imagem Cirros e registrar no Glance
-echo "Baixando e registrando a imagem Cirros..."
+echo "Baixando imagem Cirros..."
 sudo wget http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img &>/dev/null
+
+echo "adicionando imagem Cirros no Glance"
 glance image-create --name "cirros" --file cirros-0.4.0-x86_64-disk.img --disk-format qcow2 --container-format bare --visibility=public
 
 # Listar as imagens no Glance
@@ -537,7 +565,7 @@ sudo placement-status upgrade check
 echo "Listando classes de recursos..."
 openstack --os-placement-api-version 1.2 resource class list --sort-column name
 
-echo "Listando traits..."
+echo "Listando atributos..."
 openstack --os-placement-api-version 1.6 trait list --sort-column name
 
 #!/bin/bash
