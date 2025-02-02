@@ -1056,3 +1056,4 @@ openstack extension list --network
 openstack network agent list
 
 echo "configuração concluída!"
+echo "Faça a configuração do host compute."

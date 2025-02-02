@@ -239,10 +239,11 @@ enable_security_group = true
 firewall_driver = openvswitch
 EOF"
 
-#####retornar para a config do controller
+echo "configurando a bridge para a interface de provider..."
 sudo ovs-vsctl add-br br-provider
 sudo ovs-vsctl add-port br-provider $interfaceProvider
 echo "reiniciando serviços nova e neutron"
 sudo service nova-compute restart
 sudo service neutron-openvswitch-agent restart
-echo "retornar para a configuração do ${controller[0]}, agora no Horizon"
+echo "faça a configuração do host storage."
+echo "Se não for utilizar o host storage, volte e faça a configuração de update do host controller"
