@@ -290,4 +290,4 @@ sudo service tgt restart
 sudo service cinder-volume restart
 
 echo "finalizado"
-echo "continuar configuração no ${controller[0]}"
+echo "faça a configuração do host compute"
