@@ -717,7 +717,7 @@ notify_nova_on_port_status_changes = true
 notify_nova_on_port_data_changes = true
 
 [agent]
-root_helper = "sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf"
+root_helper = \"sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf\"
 
 [database]
 connection = mysql+pymysql://neutron:$senha@${controller[0]}/neutron
@@ -825,7 +825,7 @@ echo "Instalando o Horizon (OpenStack Dashboard)..."
 sudo apt install openstack-dashboard -y &>/dev/null
 
 echo "Configurando o arquivo /etc/openstack-dashboard/local_settings.py..."
-sudo bash -c 'cat <<EOF > /etc/openstack-dashboard/local_settings.py
+sudo bash -c "cat <<EOF > /etc/openstack-dashboard/local_settings.py
 import os
 from django.utils.translation import gettext_lazy as _
 from horizon.utils import secret_key
@@ -840,13 +840,13 @@ SECRET_KEY = secret_key.generate_or_read_from_file("/var/lib/openstack-dashboard
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
-        "LOCATION": "'${controller[1]}':11211",
+        "LOCATION": "${controller[1]}:11211",
     },
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-OPENSTACK_HOST = "'${controller[1]}'"
+OPENSTACK_HOST = "${controller[1]}"
 OPENSTACK_KEYSTONE_URL = "http://%s:5000/identity/v3" % OPENSTACK_HOST
 OPENSTACK_KEYSTONE_MULTIDOMAIN_SUPPORT = True
 OPENSTACK_API_VERSIONS = {
@@ -944,7 +944,7 @@ DEFAULT_THEME = "ubuntu"
 WEBROOT = "/horizon/"
 ALLOWED_HOSTS = ["*"]
 COMPRESS_OFFLINE = False
-EOF'
+EOF"
 
 echo "Reiniciando serviço do Apache..."
 sudo systemctl reload apache2
@@ -976,7 +976,7 @@ openstack endpoint create --region RegionOne volumev3 admin http://${controller[
 echo "instalando Cinder"
 sudo apt install cinder-api cinder-scheduler -y &>/dev/null
 
-echo "configurando o arquivo /etc/cinder/cinder.conf"
+echo "configurando o arquivo "
 sudo bash -c "cat <<EOF > /etc/cinder/cinder.conf
 [DEFAULT]
 rootwrap_config = /etc/cinder/rootwrap.conf
