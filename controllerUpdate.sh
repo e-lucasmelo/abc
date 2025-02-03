@@ -16,6 +16,9 @@ echo "Verificando extensões de rede e agentes de rede do Neutron..."
 openstack extension list --network
 openstack network agent list
 
+
+echo "desabilitando apenas o serviço do nova-compute..."
+sudo systemctl disable --now nova-compute
 echo "reiniciando todos os serviços...."
 sudo systemctl restart apache2.service glance-api.service neutron-dhcp-agent.service neutron-l3-agent.service neutron-metadata-agent.service neutron-openvswitch-agent.service neutron-server.service nova-api.service nova-compute.service nova-conductor.service nova-novncproxy.service nova-scheduler.service nova-api.service cinder-scheduler.service
 
