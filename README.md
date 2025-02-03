@@ -32,7 +32,7 @@ Os scripts permitem criar:
 
 ## Requisitos
 
-### Hardware
+<!-- ### Hardware
 
 ```plaintext
 | Função    | RAM  | CPUs | Armazenamento         |
@@ -40,7 +40,7 @@ Os scripts permitem criar:
 | Controller | 3GB  | 2    | 10GB                 |
 | Compute    | 3GB  | 4    | 50GB                 |
 | Storage    | 3GB  | 2    | 10GB (sistema) + 50GB (volumes) |
-```
+``` -->
 
 ### Software
 
