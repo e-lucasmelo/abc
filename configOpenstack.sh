@@ -27,7 +27,7 @@ openstack port list --router router
 echo "criando grupo de segurança com portas liberadas ..."
 
 echo " criando o grupo 'grupoTeste' ..."
-openstack security group create grupoteste --description "Grupo com portas específicas liberadas"
+openstack security group create grupoTeste --description "Grupo com portas específicas liberadas"
 echo " adicionando porta "22"..."
 openstack security group rule create grupoTeste --protocol tcp --dst-port 22 --ingress
 echo " adicionando porta "3389"..."
