@@ -823,7 +823,7 @@ sudo ovs-vsctl add-br br-provider
 sudo ovs-vsctl add-port br-provider $interfaceProvider
 
 echo "Sincronizando o banco de dados Neutron e arquivos de conf..."
-sudo neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head
+sudo neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head &>/dev/null
 
 echo "Reiniciando o serviço do NOVA API..."
 sudo service nova-api restart
