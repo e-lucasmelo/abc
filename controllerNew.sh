@@ -11,6 +11,11 @@ sudo apt upgrade -y &>/dev/null
 echo "Definindo o hostname como '${controller[0]}'..."
 sudo hostnamectl set-hostname ${controller[0]}
 
+echo "desativando NetworkManager..."
+sudo systemctl disable --now NetworkManager
+echo "ativando systemd-networkd"
+sudo systemctl enable --now systemd-networkd
+
 # Editar o arquivo /etc/hosts
 echo "Adicionando entradas no /etc/hosts..."
 sudo bash -c "cat <<EOF > /etc/hosts
@@ -38,6 +43,7 @@ fi
 echo "Configurando rede no $arquivoNetplan..."
 sudo bash -c "cat <<EOF > $arquivoNetplan
 network:
+    renderer: networkd
     ethernets:
         enp0s3:
             addresses:
