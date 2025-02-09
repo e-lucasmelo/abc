@@ -478,7 +478,7 @@ fi
 
 
 
-if [ $host = "controller"]; then
+if [ $host = "controller" ]; then
 echo "##### Configurações apenas para o controller #####"
 echo "Instalando mariadb-server python3-pymysql..."
 sudo apt install mariadb-server python3-pymysql -y &>/dev/null
