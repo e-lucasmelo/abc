@@ -55,36 +55,56 @@ Crie as seguintes redes no VirtualBox:
 2. **NAT (192.168.0.0/24)** - Rede provider
 3. **Bridge** - Rede adicional (personalizável)
 
-<!-- Todas as VMs devem ter **virtualização aninhada** habilitada. -->
+Todas as VMs devem ter **virtualização aninhada** habilitada.
 
 ## Configuração e Instalação
 
-1. Instale a vm **controller**.
-
-2. Clone o repositório:
+1. Clone este repositório no Ubuntu:
 
    ```sh
    git clone https://github.com/e-lucasmelo/abc
    cd abc
    ```
-3. Edite o arquivo de variáveis (**variaveis.sh**), preenchendo os dados conforme o necessário.
 
-4. Torne os scripts executáveis:
+2. Edite o arquivo de variáveis (**variaveis.sh**), preenchendo:
+   - Caminho do arquivo **netplan**
+   - IP da rede **NAT de gerenciamento**
+   - IP da rede **bridge**
+   - **DNSs**
+   - Interfaces de rede para **gerenciamento, provider e bridge**
+
+3. Torne os scripts executáveis:
 
    ```sh
-   sudo chmod +x *.sh
+   sudo chmod +x variaveis.sh
+   sudo chmod +x controllerNew.sh controllerUpdate.sh
+   sudo chmod +x compute1New.sh compute2New.sh compute3New.sh
+   sudo chmod +x storage1New.sh storage2New.sh storage3New.sh
    ```
-5. execute o script (**config_hosts.sh**)
+
+4. Instale o **controller** e execute:
+
+   ```sh
+   sudo ./controllerNew.sh
    ```
-   sudo ./config_hosts.sh
+
+5. Instale as VMs **compute** e execute o script correspondente em cada VM:
+
+   ```sh
+   sudo ./compute1New.sh  # Para o Compute 1
+   sudo ./compute2New.sh  # Para o Compute 2
+   sudo ./compute3New.sh  # Para o Compute 3
    ```
-6. Instale a VM **compute** 
 
-6. repita os passos "2", "3", "4" e "5"
+6. (Opcional) Instale as VMs **storage** e execute o script correspondente em cada VM:
 
-6. (Opcional) Instale as VMs **storage** e repita os passos "2", "3", "4" e "5" 
+   ```sh
+   sudo ./storage1New.sh  # Para o Storage 1
+   sudo ./storage2New.sh  # Para o Storage 2
+   sudo ./storage3New.sh  # Para o Storage 3
+   ```
 
-7. Volte para a VM **controller** e execute o script (**controllerUpdate.sh**):
+7. Volte para a VM **controller** e execute:
 
    ```sh
    sudo ./controllerUpdate.sh
