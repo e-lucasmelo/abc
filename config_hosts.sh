@@ -244,7 +244,7 @@ shell {
 global {
         umask = 077
         test = 0
-        units = "r"
+        units = \"r\"
         si_unit_consistency = 1
         suffix = 1
         activation = 1
