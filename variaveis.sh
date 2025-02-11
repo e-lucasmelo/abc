@@ -53,6 +53,9 @@ ip_Adic="192.168.0"
 
 host="controller"
 
+# se for host storage, identifique o disco que será utilizado
+disk_storage="sdb"
+
 controller=("controller" "${ip_ger}.11" "${ip_Adic}.111/24") #("host" "ip_host" "ip_acesso_vm")
 compute1=("compute1" "${ip_ger}.21" "${ip_Adic}.121/24")
 compute2=("compute2" "${ip_ger}.22" "${ip_Adic}.122/24")

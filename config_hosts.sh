@@ -14,10 +14,10 @@ host_array=($(ip_gerencia))
 host_temp=$(echo "$host" | sed 's/[0-9]*$//')
 
 if [ $host_temp = "storage" ]; then
-if [ -b /dev/sdb ]; then
-    echo "/dev/sdb existe, vamos seguir a configuração..."
+if [ -b /dev/$disk_storage ]; then
+    echo "/dev/$disk_storage existe, vamos seguir a configuração..."
 else
-    echo "/dev/sdb não existe, por favor adicione o disk e tente novamente"
+    echo "/dev/$disk_storage não existe, por favor adicione o disk e tente novamente"
     exit 1
 fi
 else
@@ -66,9 +66,14 @@ if [ $rede_ger = "wifis" ]; then
 x="            access-points:
                 \"$rede_wifi\":
                     password: \"$senha_wifi\"
+            dhcp6: false
+            accept-ra: no
+    ethernets:
 "
 else
-x=""
+x="            dhcp6: false
+            accept-ra: no
+"
 fi
 
 # Editar o arquivo de configuração de rede /etc/netplan/50-cloud-init.yaml
@@ -96,8 +101,6 @@ network:
                 via: $gateway_gerencia
                 metric: 100
 $x
-            dhcp6: false
-            accept-ra: no
         enp0s8:
             dhcp4: false
             dhcp6: false
@@ -175,23 +178,23 @@ sudo systemctl disable --now nova-compute
 echo "instalação do LVM"
 # Configurar LVM
 sudo apt install lvm2 thin-provisioning-tools -y &>/dev/null
-sudo pvcreate /dev/sdb
-sudo vgcreate cinder-volumes /dev/sdb
+sudo pvcreate /dev/$disk_storage
+sudo vgcreate cinder-volumes /dev/$disk_storage
 
 echo "configuração do arquivo /etc/lvm/lvm.conf"
 # Configurar LVM
-sudo bash -c 'cat <<EOF > /etc/lvm/lvm.conf
+sudo bash -c "cat <<EOF > /etc/lvm/lvm.conf
 config {
         checks = 1
         abort_on_errors = 0
-        profile_dir = "/etc/lvm/profile"
+        profile_dir = \"/etc/lvm/profile\"
 }
 devices {
-        dir = "/dev"
-        scan = [ "/dev" ]
-        filter = [ "a/sdb/", "r/.*/"]
+        dir = \"/dev\"
+        scan = [ \"/dev\" ]
+        filter = [ \"a/$disk_storage/\", \"r/.*/\"]
         obtain_device_list_from_udev = 1
-        external_device_info_source = "none"
+        external_device_info_source = \"none\"
         sysfs_scan = 1
         scan_lvs = 0
         multipath_component_detection = 1
@@ -225,13 +228,13 @@ log {
         command_names = 0
         prefix = "  "
         activation = 0
-        debug_classes = [ "memory", "devices", "io", "activation", "allocation", "metadata", "cache", "locking", "lvmpolld", "dbus" ]
+        debug_classes = [ \"memory\", \"devices\", \"io\", \"activation\", \"allocation\", \"metadata\", \"cache\", \"locking\", \"lvmpolld\", \"dbus\" ]
 }
 backup {
         backup = 1
-        backup_dir = "/etc/lvm/backup"
+        backup_dir = \"/etc/lvm/backup\"
         archive = 1
-        archive_dir = "/etc/lvm/archive"
+        archive_dir = \"/etc/lvm/archive\"
         retain_min = 10
         retain_days = 30
 }
@@ -245,18 +248,18 @@ global {
         si_unit_consistency = 1
         suffix = 1
         activation = 1
-        proc = "/proc"
-        etc = "/etc"
+        proc = \"/proc\"
+        etc = \"/etc\"
         wait_for_locks = 1
-        locking_dir = "/run/lock/lvm"
+        locking_dir = \"/run/lock/lvm\"
         prioritise_write_locks = 1
         abort_on_internal_errors = 0
         metadata_read_only = 0
-        mirror_segtype_default = "raid1"
-        raid10_segtype_default = "raid10"
-        sparse_segtype_default = "thin"
+        mirror_segtype_default = \"raid1\"
+        raid10_segtype_default = \"raid10\"
+        sparse_segtype_default = \"thin\"
         use_lvmlockd = 0
-        system_id_source = "none"
+        system_id_source = \"none\"
         use_lvmpolld = 1
         notify_dbus = 1
 }
@@ -265,21 +268,21 @@ activation {
         udev_sync = 1
         udev_rules = 1
         retry_deactivation = 1
-        missing_stripe_filler = "error"
+        missing_stripe_filler = \"error\"
         raid_region_size = 2048
-        raid_fault_policy = "warn"
-        mirror_image_fault_policy = "remove"
-        mirror_log_fault_policy = "allocate"
+        raid_fault_policy = \"warn\"
+        mirror_image_fault_policy = \"remove\"
+        mirror_log_fault_policy = \"allocate\"
         snapshot_autoextend_threshold = 100
         snapshot_autoextend_percent = 20
         thin_pool_autoextend_threshold = 100
         thin_pool_autoextend_percent = 20
         monitoring = 1
-        activation_mode = "degraded"
+        activation_mode = \"degraded\"
 }
 dmeventd {
 }
-EOF'
+EOF"
 
 echo "instalando Cinder"
 # Instalar e configurar Cinder
