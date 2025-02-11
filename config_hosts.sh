@@ -226,7 +226,7 @@ log {
         overwrite = 0
         level = 0
         command_names = 0
-        prefix = "  "
+        prefix = \"  \"
         activation = 0
         debug_classes = [ \"memory\", \"devices\", \"io\", \"activation\", \"allocation\", \"metadata\", \"cache\", \"locking\", \"lvmpolld\", \"dbus\" ]
 }
