@@ -1446,3 +1446,133 @@ openstack network agent list
 echo "configuração concluída!"
 echo "Faça a configuração do host compute."
 fi
+
+echo "configurando o SWIFT..."
+source variaveis.sh
+echo "Carregando variáveis de ambiente do OpenStack..."
+. admin-openrc
+
+echo "criando usuário SWIFT no openstack..."
+openstack user create --domain default --password "$senha" swift
+openstack role add --project service --user swift admin
+echo "criando serviço do SWIFT"
+openstack service create --name swift --description "OpenStack Object Storage" object-store
+
+echo "criando os endpoints do SWIFT"
+openstack endpoint create --region RegionOne object-store public http://controller:8080/v1/AUTH_%\(project_id\)s
+openstack endpoint create --region RegionOne object-store internal http://controller:8080/v1/AUTH_%\(project_id\)s
+openstack endpoint create --region RegionOne object-store admin http://controller:8080/v1
+
+sudo apt install swift swift-proxy python3-swiftclient python3-keystoneclient python3-keystonemiddleware memcached -y &>/dev/null
+sudo curl -o /etc/swift/proxy-server.conf https://opendev.org/openstack/swift/raw/branch/master/etc/proxy-server.conf-sample
+sudo nano /etc/swift/proxy-server.conf
+
+
+[DEFAULT]
+bind_port = 8080
+user = swift
+swift_dir = /etc/swift
+[pipeline:main]
+pipeline = catch_errors gatekeeper healthcheck proxy-logging cache container_sync bulk ratelimit authtoken keystoneauth container-quotas account-quotas slo dlo versioned_writes proxy-logging proxy-server
+[app:proxy-server]
+use = egg:swift#proxy
+account_autocreate = True
+[filter:tempauth]
+use = egg:swift#tempauth
+user_admin_admin = admin .admin .reseller_admin
+user_admin_auditor = admin_ro .reseller_reader
+user_test_tester = testing .admin
+user_test_tester2 = testing2 .admin
+user_test_tester3 = testing3
+user_test2_tester2 = testing2 .admin
+user_test5_tester5 = testing5 service
+[filter:authtoken]
+paste.filter_factory = keystonemiddleware.auth_token:filter_factory
+www_authenticate_uri = http://controller:5000
+auth_url = http://controller:5000
+memcached_servers = controller:11211
+auth_type = password
+project_domain_id = default
+user_domain_id = default
+project_name = service
+username = swift
+password = $senha
+delay_auth_decision = True
+[filter:keystoneauth]
+use = egg:swift#keystoneauth
+operator_roles = admin,user
+[filter:s3api]
+use = egg:swift#s3api
+[filter:s3token]
+use = egg:swift#s3token
+reseller_prefix = AUTH_
+delay_auth_decision = False
+auth_uri = http://keystonehost:5000/v3
+http_timeout = 10.0
+[filter:healthcheck]
+use = egg:swift#healthcheck
+[filter:cache]
+use = egg:swift#memcache
+memcache_servers = controller:11211
+[filter:ratelimit]
+use = egg:swift#ratelimit
+[filter:read_only]
+use = egg:swift#read_only
+[filter:domain_remap]
+use = egg:swift#domain_remap
+[filter:catch_errors]
+use = egg:swift#catch_errors
+[filter:cname_lookup]
+use = egg:swift#cname_lookup
+[filter:staticweb]
+use = egg:swift#staticweb
+[filter:tempurl]
+use = egg:swift#tempurl
+[filter:formpost]
+use = egg:swift#formpost
+[filter:name_check]
+use = egg:swift#name_check
+[filter:etag-quoter]
+use = egg:swift#etag_quoter
+[filter:list-endpoints]
+use = egg:swift#list_endpoints
+[filter:proxy-logging]
+use = egg:swift#proxy_logging
+[filter:bulk]
+use = egg:swift#bulk
+[filter:slo]
+use = egg:swift#slo
+[filter:dlo]
+use = egg:swift#dlo
+[filter:container-quotas]
+use = egg:swift#container_quotas
+[filter:account-quotas]
+use = egg:swift#account_quotas
+[filter:gatekeeper]
+use = egg:swift#gatekeeper
+[filter:container_sync]
+use = egg:swift#container_sync
+[filter:xprofile]
+use = egg:swift#xprofile
+[filter:versioned_writes]
+use = egg:swift#versioned_writes
+[filter:copy]
+use = egg:swift#copy
+[filter:keymaster]
+use = egg:swift#keymaster
+meta_version_to_write = 2
+encryption_root_secret = changeme
+[filter:kms_keymaster]
+use = egg:swift#kms_keymaster
+[filter:kmip_keymaster]
+use = egg:swift#kmip_keymaster
+[filter:encryption]
+use = egg:swift#encryption
+[filter:listing_formats]
+use = egg:swift#listing_formats
+[filter:symlink]
+use = egg:swift#symlink
+
+
+
+ajusta codigo e fazer a pasta do object storage
