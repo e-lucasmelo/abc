@@ -201,6 +201,7 @@ sudo pvcreate /dev/$disk_block
 sudo vgcreate cinder-volumes /dev/$disk_block
 
 echo "configuração do arquivo /etc/lvm/lvm.conf"
+
 # Configurar LVM
 sudo bash -c "cat <<EOF > /etc/lvm/lvm.conf
 config {
@@ -305,7 +306,8 @@ EOF"
 
 echo "instalando Cinder"
 # Instalar e configurar Cinder
-sudo apt install cinder-volume tgt -y &>/dev/null
+sudo apt install cinder-volume -y &>/dev/null
+sudo apt install tgt -y &>/dev/null
 
 echo "configurando o arquivo /etc/cinder/cinder.conf... "
 
@@ -366,7 +368,28 @@ echo "faça a configuração de update do host controller"
 
 fi
 
+if [ $host_temp = "object" ]; then
 
+echo "Instalando xfsprogs e rsync..."
+sudo apt install xfsprogs rsync
+
+echo "formatar disco em xfs"
+sudo mkfs.xfs /dev/sdb
+sudo mkfs.xfs /dev/sdc
+
+echo "criar a estrutura do diretorio montado"
+sudo mkdir -p /srv/node/sdb
+sudo mkdir -p /srv/node/sdc
+
+sudo blkid
+
+UUID="<UUID-from-output-above>" /srv/node/sdb xfs noatime 0 2
+UUID="<UUID-from-output-above>" /srv/node/sdc xfs noatime 0 2
+
+mount /srv/node/sdb
+mount /srv/node/sdc
+
+fi
 
 if [ $host_temp = "compute" ]; then
 # Configuração do arquivo /etc/nova/nova.conf
@@ -1465,9 +1488,8 @@ openstack endpoint create --region RegionOne object-store admin http://controlle
 
 sudo apt install swift swift-proxy python3-swiftclient python3-keystoneclient python3-keystonemiddleware memcached -y &>/dev/null
 sudo curl -o /etc/swift/proxy-server.conf https://opendev.org/openstack/swift/raw/branch/master/etc/proxy-server.conf-sample
-sudo nano /etc/swift/proxy-server.conf
 
-
+sudo bash -c "cat <<EOF > /etc/swift/proxy-server.conf
 [DEFAULT]
 bind_port = 8080
 user = swift
@@ -1572,7 +1594,6 @@ use = egg:swift#encryption
 use = egg:swift#listing_formats
 [filter:symlink]
 use = egg:swift#symlink
+EOF"
 
-
-
-ajusta codigo e fazer a pasta do object storage
+echo "configuração finalizada, siga com as configuração dos outros hosts..."
