@@ -49,19 +49,19 @@ ip_Adic="192.168.0"
 
 
 # qual host está configurando?
-# controller, compute1, compute2, compute3, storage1, storage2, storage3
+# controller, compute1, compute2, compute3, block1, block2, block3
 
 host="controller"
 
-# se for host storage, identifique o disco que será utilizado
-disk_storage="sdb"
+# se for host block, identifique o disco que será utilizado
+disk_block="sdb"
 
 controller=("controller" "${ip_ger}.11" "${ip_Adic}.111/24") #("host" "ip_host" "ip_acesso_vm")
 compute1=("compute1" "${ip_ger}.21" "${ip_Adic}.121/24")
 compute2=("compute2" "${ip_ger}.22" "${ip_Adic}.122/24")
 compute3=("compute3" "${ip_ger}.23" "${ip_Adic}.123/24")
-storage1=("storage1" "${ip_ger}.31" "${ip_Adic}.131/24")
-storage2=("storage2" "${ip_ger}.32" "${ip_Adic}.132/24")
-storage3=("storage3" "${ip_ger}.33" "${ip_Adic}.133/24")
-
+block1=("block1" "${ip_ger}.31" "${ip_Adic}.131/24")
+block2=("block2" "${ip_ger}.32" "${ip_Adic}.132/24")
+block3=("block3" "${ip_ger}.33" "${ip_Adic}.133/24")
+object1=("object1" "${ip_ger}.31" "${ip_Adic}.131/24")
 senha="admin"

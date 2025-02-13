@@ -13,15 +13,15 @@ ip_gerencia(){
 host_array=($(ip_gerencia))
 host_temp=$(echo "$host" | sed 's/[0-9]*$//')
 
-if [ $host_temp = "storage" ]; then
-if [ -b /dev/$disk_storage ]; then
-    echo "/dev/$disk_storage existe, vamos seguir a configuração..."
+if [ $host_temp = "block" ]; then
+if [ -b /dev/$disk_block ]; then
+    echo "/dev/$disk_block existe, vamos seguir a configuração..."
 else
-    echo "/dev/$disk_storage não existe, por favor adicione o disk e tente novamente"
+    echo "/dev/$disk_block não existe, por favor adicione o disk e tente novamente"
     exit 1
 fi
 else
-echo "host não é de storage, vamos seguir a configuração..."
+echo "host não é de block, vamos seguir a configuração..."
 fi
 
 # Atualizar e atualizar o sistema
@@ -46,9 +46,9 @@ ${controller[1]}	${controller[0]}
 ${compute1[1]}	${compute1[0]}
 ${compute2[1]}	${compute2[0]}
 ${compute3[1]}	${compute3[0]}
-${storage1[1]}	${storage1[0]}
-${storage2[1]}	${storage2[0]}
-${storage3[1]}	${storage3[0]}
+${block1[1]}	${block1[0]}
+${block2[1]}	${block2[0]}
+${block3[1]}	${block3[0]}
 EOF"
 
 if [ -n "$interfaceAdicional" ]; then
@@ -171,15 +171,15 @@ sudo apt install nova-compute -y &>/dev/null
 echo "Instalando python3-openstackclient..."
 sudo apt install python3-openstackclient -y &>/dev/null
 
-if [ $host_temp = "storage" ]; then
+if [ $host_temp = "block" ]; then
 echo "desabilitando apenas o serviço do nova-compute para o host ${host_array[0]}..."
 sudo systemctl disable --now nova-compute
 
 echo "instalação do LVM"
 # Configurar LVM
 sudo apt install lvm2 thin-provisioning-tools -y &>/dev/null
-sudo pvcreate /dev/$disk_storage
-sudo vgcreate cinder-volumes /dev/$disk_storage
+sudo pvcreate /dev/$disk_block
+sudo vgcreate cinder-volumes /dev/$disk_block
 
 echo "configuração do arquivo /etc/lvm/lvm.conf"
 # Configurar LVM
@@ -192,7 +192,7 @@ config {
 devices {
         dir = \"/dev\"
         scan = [ \"/dev\" ]
-        filter = [ \"a/$disk_storage/\", \"r/.*/\"]
+        filter = [ \"a/$disk_block/\", \"r/.*/\"]
         obtain_device_list_from_udev = 1
         external_device_info_source = \"none\"
         sysfs_scan = 1
@@ -475,8 +475,8 @@ sudo ovs-vsctl add-port br-provider $interfaceProvider
 echo "reiniciando serviços nova e neutron"
 sudo service nova-compute restart
 sudo service neutron-openvswitch-agent restart
-echo "faça a configuração do host storage."
-echo "Se não for utilizar o host storage, volte e faça a configuração de update do host controller"
+echo "faça a configuração do host block."
+echo "Se não for utilizar o host block, volte e faça a configuração de update do host controller"
 fi
 
 
@@ -1405,8 +1405,8 @@ sudo service cinder-scheduler restart
 sudo service apache2 restart
 
 echo "configuração do Cinder finalizada"
-echo "configurar o nó de storage"
-##fazer a parte do storage e quando terminar voltar aqui
+echo "configurar o nó de block"
+##fazer a parte do block e quando terminar voltar aqui
 
 echo "Carregando variáveis de ambiente do OpenStack..."
 . admin-openrc
