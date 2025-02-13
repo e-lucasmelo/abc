@@ -2,14 +2,36 @@
 
 source variaveis.sh
 
+
+# Função que usa indireção para acessar o array correto
+ip_gerencia(){
+    # Variável indireta para pegar o array correto
+    local array_name="$host"  # O nome do host
+    eval "echo \${$array_name[@]}"  # Retorna toda a lista do array correspondente ao nome do host
+}
+
+host_array=($(ip_gerencia))
+host_temp=$(echo "$host" | sed 's/[0-9]*$//')
+
+if [ $host_temp = "storage" ]; then
+if [ -b /dev/$disk_storage ]; then
+    echo "/dev/$disk_storage existe, vamos seguir a configuração..."
+else
+    echo "/dev/$disk_storage não existe, por favor adicione o disk e tente novamente"
+    exit 1
+fi
+else
+echo "host não é de storage, vamos seguir a configuração..."
+fi
+
 # Atualizar e atualizar o sistema
 echo "Atualizando o sistema..."
 sudo apt update &>/dev/null
 sudo apt upgrade -y &>/dev/null
 
 # Definir o nome do host como 'controller'
-echo "Definindo o hostname como '${controller[0]}'..."
-sudo hostnamectl set-hostname ${controller[0]}
+echo "Definindo o hostname como '${host_array[0]}'..."
+sudo hostnamectl set-hostname ${host_array[0]}
 
 echo "desativando NetworkManager..."
 sudo systemctl disable --now NetworkManager
@@ -32,22 +54,37 @@ EOF"
 if [ -n "$interfaceAdicional" ]; then
 i="        $interfaceAdicional:
             addresses:
-            - ${controller[2]}
+            - ${host_array[2]}
             dhcp6: false
             accept-ra: no
 "
 else
 i=""
 fi
+
+if [ $rede_ger = "wifis" ]; then
+x="            access-points:
+                \"$rede_wifi\":
+                    password: \"$senha_wifi\"
+            dhcp6: false
+            accept-ra: no
+    ethernets:
+"
+else
+x="            dhcp6: false
+            accept-ra: no
+"
+fi
+
 # Editar o arquivo de configuração de rede /etc/netplan/50-cloud-init.yaml
 echo "Configurando rede no $arquivoNetplan..."
 sudo bash -c "cat <<EOF > $arquivoNetplan
 network:
     renderer: networkd
-    ethernets:
-        enp0s3:
+    $rede_ger:
+        $interface_ger:
             addresses:
-            - ${controller[1]}/24
+            - ${host_array[1]}/24
             nameservers:
                 addresses:
                 - ${dns[0]}
@@ -63,8 +100,7 @@ network:
             -   to: ${dns[1]}
                 via: $gateway_gerencia
                 metric: 100
-            dhcp6: false
-            accept-ra: no
+$x
         enp0s8:
             dhcp4: false
             dhcp6: false
@@ -87,17 +123,42 @@ EOF'
 echo "Aplicando configurações do Netplan..."
 sudo netplan apply
 
+# Testando a conexão de rede com 3 tentativas
+echo "Testando a conexão de rede..."
+tentativas=0
+max_tentativas=3
+
+while ! curl -s --connect-timeout 5 http://www.google.com --output /dev/null; do
+    tentativas=$((tentativas + 1))
+    
+    if [ "$tentativas" -ge "$max_tentativas" ]; then
+        echo "Falha na conexão após $max_tentativas tentativas. Encerrando o script."
+        exit 1
+    fi
+
+    echo "Sem conexão. Tentativa $tentativas de $max_tentativas. Tentando novamente em 3 segundos..."
+    sleep 3
+done
+
+echo "Conexão estabelecida com sucesso!"
+
 # Instalar o Chrony e configurar o servidor NTP
 echo "Instalando o Chrony..."
 sudo apt install chrony -y &>/dev/null
+
+if [ $host = "controller" ]; then
+network="allow $ip_ger.0/24
+pool ntp.ubuntu.com        iburst maxsources 4"
+else
+network=""
+fi
 
 # Configurar o arquivo de configuração do Chrony
 echo "Configurando o arquivo /etc/chrony/chrony.conf..."
 sudo bash -c "cat <<EOF > /etc/chrony/chrony.conf
 server ${controller[0]} iburst
-allow $gerenciamento.0/24
+$network
 confdir /etc/chrony/conf.d
-pool ntp.ubuntu.com        iburst maxsources 4
 sourcedir /run/chrony-dhcp
 sourcedir /etc/chrony/sources.d
 keyfile /etc/chrony/chrony.keys
@@ -128,6 +189,319 @@ echo "Instalando nova-compute e dependências..."
 sudo apt install nova-compute -y &>/dev/null
 echo "Instalando python3-openstackclient..."
 sudo apt install python3-openstackclient -y &>/dev/null
+
+if [ $host_temp = "storage" ]; then
+echo "desabilitando apenas o serviço do nova-compute para o host ${host_array[0]}..."
+sudo systemctl disable --now nova-compute
+
+echo "instalação do LVM"
+# Configurar LVM
+sudo apt install lvm2 thin-provisioning-tools -y &>/dev/null
+sudo pvcreate /dev/$disk_storage
+sudo vgcreate cinder-volumes /dev/$disk_storage
+
+echo "configuração do arquivo /etc/lvm/lvm.conf"
+# Configurar LVM
+sudo bash -c "cat <<EOF > /etc/lvm/lvm.conf
+config {
+        checks = 1
+        abort_on_errors = 0
+        profile_dir = \"/etc/lvm/profile\"
+}
+devices {
+        dir = \"/dev\"
+        scan = [ \"/dev\" ]
+        filter = [ \"a/$disk_storage/\", \"r/.*/\"]
+        obtain_device_list_from_udev = 1
+        external_device_info_source = \"none\"
+        sysfs_scan = 1
+        scan_lvs = 0
+        multipath_component_detection = 1
+        md_component_detection = 1
+        fw_raid_component_detection = 0
+        md_chunk_alignment = 1
+        data_alignment_detection = 1
+        data_alignment = 0
+        data_alignment_offset_detection = 1
+        ignore_suspended_devices = 0
+        ignore_lvm_mirrors = 1
+        require_restorefile_with_uuid = 1
+        pv_min_size = 2048
+        issue_discards = 1
+        allow_changes_with_duplicate_pvs = 0
+        allow_mixed_block_sizes = 0
+}
+
+allocation {
+        maximise_cling = 1
+        use_blkid_wiping = 1
+        wipe_signatures_when_zeroing_new_lvs = 1
+        mirror_logs_require_separate_pvs = 0
+}
+log {
+        verbose = 0
+        silent = 0
+        syslog = 1
+        overwrite = 0
+        level = 0
+        command_names = 0
+        prefix = \"  \"
+        activation = 0
+        debug_classes = [ \"memory\", \"devices\", \"io\", \"activation\", \"allocation\", \"metadata\", \"cache\", \"locking\", \"lvmpolld\", \"dbus\" ]
+}
+backup {
+        backup = 1
+        backup_dir = \"/etc/lvm/backup\"
+        archive = 1
+        archive_dir = \"/etc/lvm/archive\"
+        retain_min = 10
+        retain_days = 30
+}
+shell {
+        history_size = 100
+}
+global {
+        umask = 077
+        test = 0
+        units = \"r\"
+        si_unit_consistency = 1
+        suffix = 1
+        activation = 1
+        proc = \"/proc\"
+        etc = \"/etc\"
+        wait_for_locks = 1
+        locking_dir = \"/run/lock/lvm\"
+        prioritise_write_locks = 1
+        abort_on_internal_errors = 0
+        metadata_read_only = 0
+        mirror_segtype_default = \"raid1\"
+        raid10_segtype_default = \"raid10\"
+        sparse_segtype_default = \"thin\"
+        use_lvmlockd = 0
+        system_id_source = \"none\"
+        use_lvmpolld = 1
+        notify_dbus = 1
+}
+activation {
+        checks = 0
+        udev_sync = 1
+        udev_rules = 1
+        retry_deactivation = 1
+        missing_stripe_filler = \"error\"
+        raid_region_size = 2048
+        raid_fault_policy = \"warn\"
+        mirror_image_fault_policy = \"remove\"
+        mirror_log_fault_policy = \"allocate\"
+        snapshot_autoextend_threshold = 100
+        snapshot_autoextend_percent = 20
+        thin_pool_autoextend_threshold = 100
+        thin_pool_autoextend_percent = 20
+        monitoring = 1
+        activation_mode = \"degraded\"
+}
+dmeventd {
+}
+EOF"
+
+echo "instalando Cinder"
+# Instalar e configurar Cinder
+sudo apt install cinder-volume tgt -y &>/dev/null
+
+echo "configurando o arquivo /etc/cinder/cinder.conf... "
+
+sudo bash -c "cat <<EOF > /etc/cinder/cinder.conf
+[DEFAULT]
+transport_url = rabbit://openstack:$senha@${controller[0]}
+auth_strategy = keystone
+my_ip = ${host_array[1]}
+enabled_backends = lvm
+glance_api_servers = http://${controller[0]}:9292
+rootwrap_config = /etc/cinder/rootwrap.conf
+api_paste_confg = /etc/cinder/api-paste.ini
+iscsi_helper = lioadm
+volume_name_template = volume-%s
+volume_group = cinder-volumes
+verbose = True
+state_path = /var/lib/cinder
+lock_path = /var/lock/cinder
+volumes_dir = /var/lib/cinder/volumes
+
+[database]
+connection = mysql+pymysql://cinder:$senha@${controller[0]}/cinder
+
+[keystone_authtoken]
+www_authenticate_uri = http://${controller[0]}:5000
+auth_url = http://${controller[0]}:5000
+memcached_servers = ${controller[0]}:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = cinder
+password = $senha
+
+[lvm]
+volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver
+volume_group = cinder-volumes
+target_protocol = iscsi
+target_helper = tgtadm
+
+[oslo_concurrency]
+lock_path = /var/lib/cinder/tmp
+EOF"
+
+# Configurar tgt
+echo "configuração do arquivo /etc/tgt/conf.d/cinder.conf"
+sudo bash -c 'cat <<EOF > /etc/tgt/conf.d/cinder.conf
+include /var/lib/cinder/volumes/*
+EOF'
+
+echo "reiniciar serviços"
+# Reiniciar serviços
+sudo service tgt restart
+sudo service cinder-volume restart
+
+echo "finalizado"
+echo "faça a configuração de update do host controller"
+
+fi
+
+
+
+if [ $host_temp = "compute" ]; then
+# Configuração do arquivo /etc/nova/nova.conf
+echo "configuração apenas para o host compute"
+echo "Configurando o arquivo /etc/nova/nova.conf..."
+sudo bash -c "cat <<EOF > /etc/nova/nova.conf
+[DEFAULT]
+log_dir = /var/log/nova
+lock_path = /var/lock/nova
+state_path = /var/lib/nova
+my_ip = ${host_array[1]}
+transport_url = rabbit://openstack:$senha@${controller[0]}:5672/
+[api]
+auth_strategy = keystone
+
+[keystone_authtoken]
+www_authenticate_uri = http://${controller[0]}:5000/
+auth_url = http://${controller[0]}:5000/
+memcached_servers = ${controller[0]}:11211
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = nova
+password = $senha
+
+[service_user]
+send_service_user_token = true
+#auth_url = https://${controller[0]}/identity
+auth_url = http://${controller[0]}:5000/
+auth_strategy = keystone
+auth_type = password
+project_domain_name = Default
+project_name = service
+user_domain_name = Default
+username = nova
+password = $senha
+
+[vnc]
+enabled = true
+server_listen = 0.0.0.0
+server_proxyclient_address = ${host_array[1]}
+novncproxy_base_url = http://${controller[0]}:6080/vnc_auto.html
+
+[glance]
+api_servers = http://${controller[0]}:9292
+
+[oslo_concurrency]
+lock_path = /var/lib/nova/tmp
+
+[placement]
+region_name = RegionOne
+project_domain_name = Default
+project_name = service
+auth_type = password
+user_domain_name = Default
+auth_url = http://${controller[0]}:5000/v3
+username = placement
+password = $senha
+
+[neutron]
+auth_url = http://${controller[0]}:5000
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+region_name = RegionOne
+project_name = service
+username = neutron
+password = $senha
+EOF"
+
+# Verifica se a CPU suporta virtualização (Intel VT-x ou AMD-V)
+if [[ $(egrep -c '(vmx|svm)' /proc/cpuinfo) -eq 0 ]]; then
+    echo "Virtualização não suportada pela CPU. Configurando o nova-compute para usar QEMU..."
+
+    sudo bash -c 'cat <<EOF > /etc/nova/nova-compute.conf
+[DEFAULT]
+compute_driver=libvirt.LibvirtDriver
+[libvirt]
+virt_type=qemu
+EOF'
+
+    echo "Configuração concluída. O OpenStack Nova Compute agora usará QEMU como backend."
+else
+    echo "A CPU suporta virtualização. Nenhuma alteração necessária."
+fi
+
+echo "reiniciando serviço do nova-compute"
+sudo service nova-compute restart
+
+echo "Instalando os pacotes do Neutron..."
+sudo apt install neutron-openvswitch-agent -y &>/dev/null
+
+echo "Configurando o arquivo /etc/neutron/neutron.conf..."
+sudo bash -c "cat <<EOF > /etc/neutron/neutron.conf
+[DEFAULT]
+core_plugin = ml2
+transport_url = rabbit://openstack:$senha@${controller[0]}
+
+[agent]
+root_helper = \"sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf\"
+
+[oslo_concurrency]
+lock_path = /var/lib/neutron/tmp
+EOF"
+
+echo "Configurando o arquivo /etc/neutron/plugins/ml2/openvswitch_agent.ini..."
+sudo bash -c "cat <<EOF > /etc/neutron/plugins/ml2/openvswitch_agent.ini
+[ovs]
+bridge_mappings = provider:br-provider
+local_ip = ${host_array[1]}
+
+[agent]
+tunnel_types = vxlan
+l2_population = true
+
+[securitygroup]
+enable_security_group = true
+firewall_driver = openvswitch
+EOF"
+
+echo "configurando a bridge para a interface de provider..."
+sudo ovs-vsctl add-br br-provider
+sudo ovs-vsctl add-port br-provider $interfaceProvider
+echo "reiniciando serviços nova e neutron"
+sudo service nova-compute restart
+sudo service neutron-openvswitch-agent restart
+echo "faça a configuração do host storage."
+echo "Se não for utilizar o host storage, volte e faça a configuração de update do host controller"
+fi
+
+
+
+if [ $host = "controller" ]; then
+echo "##### Configurações apenas para o controller #####"
 echo "Instalando mariadb-server python3-pymysql..."
 sudo apt install mariadb-server python3-pymysql -y &>/dev/null
 
@@ -227,7 +601,8 @@ EOF"
 
 # Sincronizar o banco de dados do Keystone
 echo "Sincronizando o banco de dados do Keystone..."
-sudo keystone-manage db_sync
+#sudo keystone-manage db_sync
+sudo -u keystone /bin/sh -c "keystone-manage db_sync"
 
 # Configurar o Fernet para o Keystone
 echo "Configurando o Fernet para o Keystone..."
@@ -352,14 +727,14 @@ export OS_IDENTITY_API_VERSION=3
 # Criar projetos e usuários no OpenStack
 echo "configurando projeto dos serviços..."
 openstack project create --domain default --description "Service Project" service
-echo "configurando projeto de demo..."
-openstack project create --domain default --description "Demo Project" myproject
-echo "configurando usuário myuser ..."
-openstack user create --domain default --password "$senha" myuser
-echo "configurando a função de usuário myrole..."
-openstack role create myrole
-echo "configurando usuário myuser na função myrole..."
-openstack role add --project myproject --user myuser myrole
+# echo "configurando projeto de demo..."
+# openstack project create --domain default --description "Demo Project" myproject
+# echo "configurando usuário myuser ..."
+# openstack user create --domain default --password "$senha" myuser
+# echo "configurando a função de usuário myrole..."
+# openstack role create myrole
+# echo "configurando usuário myuser na função myrole..."
+# openstack role add --project myproject --user myuser myrole
 
 # Desconfigurar variáveis de ambiente
 #echo "Desconfigurando variáveis de ambiente..."
@@ -370,8 +745,8 @@ echo "testando obtenção de token de administrador..."
 openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name admin --os-username admin token issue
 
 # Obter o token do usuário demo
-echo "testando obtenção de token do usuário myrole..."
-openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name myproject --os-username myuser token issue
+# echo "testando obtenção de token do usuário myrole..."
+# openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name myproject --os-username myuser token issue
 
 # Criar arquivos admin-openrc e demo-openrc
 echo "Criando arquivos admin-openrc..."
@@ -384,15 +759,15 @@ export OS_AUTH_URL=http://${controller[0]}:5000/v3
 export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2" | sudo tee admin-openrc &>/dev/null
 
-echo "Criando arquivo demo-openrc..."
-echo "export OS_PROJECT_DOMAIN_NAME=Default
-export OS_USER_DOMAIN_NAME=Default
-export OS_PROJECT_NAME=myproject
-export OS_USERNAME=myuser
-export OS_PASSWORD=$senha
-export OS_AUTH_URL=http://${controller[0]}:5000/v3
-export OS_IDENTITY_API_VERSION=3
-export OS_IMAGE_API_VERSION=2" | sudo tee demo-openrc &>/dev/null
+# echo "Criando arquivo demo-openrc..."
+# echo "export OS_PROJECT_DOMAIN_NAME=Default
+# export OS_USER_DOMAIN_NAME=Default
+# export OS_PROJECT_NAME=myproject
+# export OS_USERNAME=myuser
+# export OS_PASSWORD=$senha
+# export OS_AUTH_URL=http://${controller[0]}:5000/v3
+# export OS_IDENTITY_API_VERSION=3
+# export OS_IMAGE_API_VERSION=2" | sudo tee demo-openrc &>/dev/null
 
 # Carregar o arquivo admin-openrc e obter o token
 echo "Carregando admin-openrc e testando obtenção  do token..."
@@ -482,7 +857,8 @@ openstack role add --user glance --user-domain Default --system all reader
 
 # Sincronizar o banco de dados do Glance
 echo "Sincronizando o banco de dados do Glance..."
-sudo glance-manage db_sync &>/dev/null
+#sudo glance-manage db_sync &>/dev/null
+sudo -u glance /bin/sh -c "glance-manage db_sync" &>/dev/null
 
 # Reiniciar o serviço Glance API
 echo "Reiniciando o serviço Glance API..."
@@ -500,8 +876,8 @@ echo "adicionando imagem Cirros no Glance"
 glance image-create --name "cirros" --file cirros-0.4.0-x86_64-disk.img --disk-format qcow2 --container-format bare --visibility=public
 
 # Listar as imagens no Glance
-echo "Listando imagens registradas no Glance..."
-glance image-list
+# echo "Listando imagens registradas no Glance..."
+# glance image-list
 
 # Configuração do banco de dados MySQL para o Placement
 echo "Configurando o banco de dados MySQL para o Placement..."
@@ -528,7 +904,7 @@ openstack service create --name placement --description "Placement API" placemen
 echo "Criando endpoints do Placement..."
 openstack endpoint create --region RegionOne placement public http://${controller[0]}:8778
 openstack endpoint create --region RegionOne placement internal http://${controller[0]}:8778
-openstack endpoint create --region RegionOne placement $senha http://${controller[0]}:8778
+openstack endpoint create --region RegionOne placement admin http://${controller[0]}:8778
 
 # Instalar o serviço Placement API
 echo "Instalando o serviço Placement API..."
@@ -554,8 +930,8 @@ EOF"
 
 # Sincronizar o banco de dados do Placement
 echo "Sincronizando o banco de dados do Placement..."
-sudo placement-manage db sync
-
+#sudo placement-manage db sync
+sudo -u placement /bin/sh -c "placement-manage db sync" &>/dev/null
 # Reiniciar o serviço Apache para o Placement
 echo "Reiniciando o serviço Apache..."
 sudo service apache2 restart
@@ -684,20 +1060,26 @@ EOF"
 
 # Sincronizar o banco de dados da API Nova
 echo "Sincronizando o banco de dados da API Nova..."
-sudo nova-manage api_db sync
+#sudo nova-manage api_db sync
+sudo -u nova /bin/sh -c "nova-manage api_db sync" &>/dev/null
 
 # Criar e mapear células
 echo "Criando e mapeando células do Nova..."
-sudo nova-manage cell_v2 map_cell0
-sudo nova-manage cell_v2 create_cell --name=cell1 --verbose
+# sudo nova-manage cell_v2 map_cell0
+sudo -u nova /bin/sh -c "nova-manage cell_v2 map_cell0" &>/dev/null
+
+# sudo nova-manage cell_v2 create_cell --name=cell1 --verbose
+sudo -u nova /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" &>/dev/null
 
 # Sincronizar o banco de dados do Nova
 echo "Sincronizando o banco de dados do Nova..."
-sudo nova-manage db sync
+# sudo nova-manage db sync
+sudo -u nova /bin/sh -c "nova-manage db sync" &>/dev/null
 
 # Listar células
 echo "Listando as células do Nova..."
-sudo nova-manage cell_v2 list_cells
+# sudo nova-manage cell_v2 list_cells
+sudo -u nova /bin/sh -c "nova-manage cell_v2 list_cells" &>/dev/null
 
 # Reiniciar os serviços do Nova
 echo "Reiniciando os serviços do Nova..."
@@ -827,7 +1209,8 @@ sudo ovs-vsctl add-br br-provider
 sudo ovs-vsctl add-port br-provider $interfaceProvider
 
 echo "Sincronizando o banco de dados Neutron e arquivos de conf..."
-sudo neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head &>/dev/null
+# sudo neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head &>/dev/null
+sudo -u neutron /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" &>/dev/null
 
 echo "Reiniciando o serviço do NOVA API..."
 sudo service nova-api restart
@@ -1030,7 +1413,8 @@ lock_path = /var/lib/cinder/tmp
 EOF"
 
 echo "sincronizando banco de dados Cinder"
-sudo cinder-manage db sync
+# sudo cinder-manage db sync
+sudo -u cinder /bin/sh -c "cinder-manage db sync"
 
 echo "reiniciando o serviço do NOVA-API"
 sudo service nova-api restart
@@ -1040,14 +1424,14 @@ sudo service cinder-scheduler restart
 sudo service apache2 restart
 
 echo "configuração do Cinder finalizada"
-echo "configurar o nó de storage"
+# echo "configurar o nó de storage"
 ##fazer a parte do storage e quando terminar voltar aqui
 
 echo "Carregando variáveis de ambiente do OpenStack..."
 . admin-openrc
 
 echo "verificando os hosts compute..."
-sudo nova-manage cell_v2 discover_hosts --verbose
+sudo -u nova /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose"
 
 echo "verificar a lista de serviços, catálogo e imagem"
 openstack compute service list
@@ -1061,3 +1445,4 @@ openstack network agent list
 
 echo "configuração concluída!"
 echo "Faça a configuração do host compute."
+fi
