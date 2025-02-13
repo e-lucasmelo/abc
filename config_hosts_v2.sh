@@ -1466,9 +1466,6 @@ echo "Verificando extensões de rede e agentes de rede do Neutron..."
 openstack extension list --network
 openstack network agent list
 
-echo "configuração concluída!"
-echo "Faça a configuração do host compute."
-fi
 
 echo "configurando o SWIFT..."
 source variaveis.sh
@@ -1595,5 +1592,6 @@ use = egg:swift#listing_formats
 [filter:symlink]
 use = egg:swift#symlink
 EOF"
-
-echo "configuração finalizada, siga com as configuração dos outros hosts..."
+echo "configuração concluída!"
+echo "Faça a configuração do host compute."
+fi
