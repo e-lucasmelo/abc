@@ -14,14 +14,42 @@ host_array=($(ip_gerencia))
 host_temp=$(echo "$host" | sed 's/[0-9]*$//')
 
 if [ $host_temp = "block" ]; then
+
 if [ -b /dev/$disk_block ]; then
     echo "/dev/$disk_block existe, vamos seguir a configuração..."
+elif [ -n $disk_block ];then
+    echo "a variável disk_block está vazia, não podemos seguir com a configuração."
+    echo "preencha a variavel e inicie o script novamente."
+    exit 1
 else
     echo "/dev/$disk_block não existe, por favor adicione o disk e tente novamente"
     exit 1
 fi
 else
 echo "host não é de block, vamos seguir a configuração..."
+fi
+
+if [ $host_temp = "object" ]; then
+if [ -n $disk_object1 ];then
+    echo "a variável disk_object1 está vazia, preencha a variavel e inicie o script novamente."
+    exit 1
+elif [ -n $disk_object2 ]; then
+    echo "a variável disk_object2 está vazia, preencha a variavel e inicie o script novamente."
+    exit 1
+elif [ ! -e /dev/$disk_object1 ]; then
+    echo "o disco /dev/$disk_object1 não foi encontrado, veja se a variavel foi definida corretamente e se o disco existe"
+    exit 1
+elif [ ! -e /dev/$disk_object2 ]; then
+    echo "o disco /dev/$disk_object2 não foi encontrado, veja se a variavel foi definida corretamente e se o disco existe"
+    exit 1
+elif [ -e /dev/$disk_object1 ] && [ -e /dev/$disk_object2 ]; then
+    echo "os discos /dev/$disk_object1 e /dev/$disk_object2 existem, vamos seguir a configuração..."
+else
+    echo "/dev/$disk_block não existe, por favor adicione o disk e tente novamente"
+    exit 1
+fi
+else
+echo "host não é de object, vamos seguir a configuração..."
 fi
 
 # Atualizar e atualizar o sistema
@@ -49,6 +77,9 @@ ${compute3[1]}	${compute3[0]}
 ${block1[1]}	${block1[0]}
 ${block2[1]}	${block2[0]}
 ${block3[1]}	${block3[0]}
+${object1[1]}	${object1[0]}
+${object2[1]}	${object2[0]}
+${object3[1]}	${object3[0]}
 EOF"
 
 if [ -n "$interfaceAdicional" ]; then
@@ -360,7 +391,7 @@ EOF'
 
 echo "reiniciar serviços"
 # Reiniciar serviços
-sudo service tgt restart
+sudo service tgt restart 
 sudo service cinder-volume restart
 
 echo "finalizado"
@@ -374,21 +405,173 @@ echo "Instalando xfsprogs e rsync..."
 sudo apt install xfsprogs rsync
 
 echo "formatar disco em xfs"
-sudo mkfs.xfs /dev/sdb
-sudo mkfs.xfs /dev/sdc
+sudo mkfs.xfs /dev/$disk_object1
+sudo mkfs.xfs /dev/$disk_object2
 
 echo "criar a estrutura do diretorio montado"
-sudo mkdir -p /srv/node/sdb
-sudo mkdir -p /srv/node/sdc
+sudo mkdir -p /srv/node/$disk_object1
+sudo mkdir -p /srv/node/$disk_object2
 
-sudo blkid
+#sudo blkid
 
-UUID="<UUID-from-output-above>" /srv/node/sdb xfs noatime 0 2
-UUID="<UUID-from-output-above>" /srv/node/sdc xfs noatime 0 2
+# Define o dispositivo (substitua /dev/sdX pelo seu dispositivo)
+device_object1="/dev/$disk_object1"
+device_object2="/dev/$disk_object2"
 
-mount /srv/node/sdb
-mount /srv/node/sdc
+# Obtém o UUID do dispositivo e armazena na variável UUID
+UUID1=$(blkid -s UUID -o value "$device_object1")
+UUID2=$(blkid -s UUID -o value "$device_object2")
 
+echo "configurando o arquivo /etc/fstab..."
+sudo bash -c "cat <<EOF >> /etc/fstab
+UUID=$device_object1 /srv/node/$disk_object1 xfs noatime 0 2
+UUID=$device_object2 /srv/node/$disk_object2 xfs noatime 0 2
+EOF"
+
+sudo mount /srv/node/$disk_object1
+sudo mount /srv/node/$disk_object2
+
+sudo bash -c "cat <<EOF > /etc/rsyncd.conf
+uid = swift
+gid = swift
+log file = /var/log/rsyncd.log
+pid file = /var/run/rsyncd.pid
+address = ${host_array[1]}
+
+[account]
+max connections = 2
+path = /srv/node/
+read only = False
+lock file = /var/lock/account.lock
+
+[container]
+max connections = 2
+path = /srv/node/
+read only = False
+lock file = /var/lock/container.lock
+
+[object]
+max connections = 2
+path = /srv/node/
+read only = False
+lock file = /var/lock/object.lock
+EOF"
+
+echo "configurando o arquivo /etc/default/rsync..."
+sudo bash -c "cat <<EOF > /etc/default/rsync
+RSYNC_ENABLE=true
+RSYNC_OPTS=''
+RSYNC_NICE=''
+EOF"
+
+echo "reiniciando serviço do rsync..."
+sudo service rsync start
+
+echo "instalando swift e dependencias..."
+sudo apt-get install swift swift-account swift-container swift-object -y &>/dev/null
+
+echo "baixando os arquivo de configuração para accounting, container and object"
+sudo curl -o /etc/swift/account-server.conf https://opendev.org/openstack/swift/raw/branch/master/etc/account-server.conf-sample &>/dev/null
+sudo curl -o /etc/swift/container-server.conf https://opendev.org/openstack/swift/raw/branch/master/etc/container-server.conf-sample &>/dev/null
+sudo curl -o /etc/swift/object-server.conf https://opendev.org/openstack/swift/raw/branch/master/etc/object-server.conf-sample &>/dev/null
+
+echo "configurando o arquivo /etc/swift/account-server.conf..."
+sudo bash -c "cat <<EOF > /etc/swift/account-server.conf
+[DEFAULT]
+bind_ip = ${host_array[1]}
+bind_port = 6202
+user = swift
+swift_dir = /etc/swift
+devices = /srv/node
+mount_check = True
+[pipeline:main]
+pipeline = healthcheck recon account-server
+[app:account-server]
+use = egg:swift#account
+[filter:healthcheck]
+use = egg:swift#healthcheck
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+[filter:backend_ratelimit]
+use = egg:swift#backend_ratelimit
+[account-replicator]
+[account-auditor]
+[account-reaper]
+[filter:xprofile]
+use = egg:swift#xprofile
+EOF"
+
+echo "configurando o arquivo /etc/swift/container-server.conf..."
+sudo bash -c "cat <<EOF > /etc/swift/container-server.conf
+[DEFAULT]
+bind_ip = ${host_array[1]}
+bind_port = 6201
+user = swift
+swift_dir = /etc/swift
+devices = /srv/node
+mount_check = True
+[pipeline:main]
+pipeline = healthcheck recon container-server
+[app:container-server]
+use = egg:swift#container
+[filter:healthcheck]
+use = egg:swift#healthcheck
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+[filter:backend_ratelimit]
+use = egg:swift#backend_ratelimit
+[container-replicator]
+[container-updater]
+[container-auditor]
+[container-sync]
+[filter:xprofile]
+use = egg:swift#xprofile
+[container-sharder]
+EOF"
+
+echo "configurando o arquivo /etc/swift/object-server.conf..."
+sudo bash -c "cat <<EOF > /etc/swift/object-server.conf
+[DEFAULT]
+bind_port = 6200
+bind_ip = ${host_array[1]}
+bind_port = 6200
+user = swift
+swift_dir = /etc/swift
+devices = /srv/node
+mount_check = True
+[pipeline:main]
+pipeline = healthcheck recon object-server
+[app:object-server]
+use = egg:swift#object
+[filter:healthcheck]
+use = egg:swift#healthcheck
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+recon_lock_path = /var/lock
+[filter:backend_ratelimit]
+use = egg:swift#backend_ratelimit
+[object-replicator]
+[object-reconstructor]
+[object-updater]
+[object-auditor]
+[object-expirer]
+[filter:xprofile]
+use = egg:swift#xprofile
+[object-relinker]
+EOF"
+
+echo "alterando o proprietario da pasta /srv/node para o swift..."
+sudo chown -R swift:swift /srv/node
+
+echo "criando pasta /var/cache/swift e alterando o proprietário para o swift..."
+sudo mkdir -p /var/cache/swift
+sudo chown -R root:swift /var/cache/swift
+sudo chmod -R 775 /var/cache/swift
+
+echo "configuração do object storage finalizada, faça a configuração do ring no nó controller"
 fi
 
 if [ $host_temp = "compute" ]; then
@@ -472,7 +655,7 @@ compute_driver=libvirt.LibvirtDriver
 virt_type=qemu
 EOF'
 
-    echo "Configuração concluída. O OpenStack Nova Compute agora usará QEMU como backend."
+    echo "Configuração concluída. O Nova Compute usará QEMU como backend."
 else
     echo "A CPU suporta virtualização. Nenhuma alteração necessária."
 fi
@@ -665,70 +848,44 @@ echo "Configurando o arquivo /etc/apache2/apache2.conf..."
 
 sudo tee /etc/apache2/apache2.conf > /dev/null <<EOF
 DefaultRuntimeDir \${APACHE_RUN_DIR}
-
 PidFile \${APACHE_PID_FILE}
-
 Timeout 300
-
 KeepAlive On
-
 MaxKeepAliveRequests 100
-
 ServerName ${controller[0]}
-
 KeepAliveTimeout 5
-
 User \${APACHE_RUN_USER}
-
 Group \${APACHE_RUN_GROUP}
-
 HostnameLookups Off
-
 ErrorLog \${APACHE_LOG_DIR}/error.log
-
 LogLevel warn
-
 IncludeOptional mods-enabled/*.load
-
 IncludeOptional mods-enabled/*.conf
-
 Include ports.conf
-
 <Directory />
         Options FollowSymLinks
         AllowOverride None
         Require all denied
 </Directory>
-
 <Directory /usr/share>
         AllowOverride None
         Require all granted
 </Directory>
-
 <Directory /var/www/>
         Options Indexes FollowSymLinks
         AllowOverride None
         Require all granted
 </Directory>
-
 AccessFileName .htaccess
-
 <FilesMatch "^\.ht">
         Require all denied
 </FilesMatch>
-
 LogFormat "%v:%p %h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\"" vhost_combined
-
 LogFormat "%h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\"" combined
-
 LogFormat "%h %l %u %t \"%r\" %>s %O" common
-
 LogFormat "%{Referer}i -> %U" referer
-
 LogFormat "%{User-agent}i" agent
-
 IncludeOptional conf-enabled/*.conf
-
 IncludeOptional sites-enabled/*.conf
 EOF
 
@@ -970,8 +1127,6 @@ openstack --os-placement-api-version 1.2 resource class list --sort-column name
 
 echo "Listando atributos..."
 openstack --os-placement-api-version 1.6 trait list --sort-column name
-
-#!/bin/bash
 
 # Configuração do banco de dados MySQL para o Nova
 echo "Configurando o banco de dados MySQL para o Nova..."
@@ -1437,7 +1592,7 @@ EOF"
 
 echo "sincronizando banco de dados Cinder"
 # sudo cinder-manage db sync
-sudo -u cinder /bin/sh -c "cinder-manage db sync"
+sudo -u cinder /bin/sh -c "cinder-manage db sync" &>/dev/null
 
 echo "reiniciando o serviço do NOVA-API"
 sudo service nova-api restart
@@ -1479,9 +1634,9 @@ echo "criando serviço do SWIFT"
 openstack service create --name swift --description "OpenStack Object Storage" object-store
 
 echo "criando os endpoints do SWIFT"
-openstack endpoint create --region RegionOne object-store public http://controller:8080/v1/AUTH_%\(project_id\)s
-openstack endpoint create --region RegionOne object-store internal http://controller:8080/v1/AUTH_%\(project_id\)s
-openstack endpoint create --region RegionOne object-store admin http://controller:8080/v1
+openstack endpoint create --region RegionOne object-store public http://${controller[0]}:8080/v1/AUTH_%\(project_id\)s
+openstack endpoint create --region RegionOne object-store internal http://${controller[0]}:8080/v1/AUTH_%\(project_id\)s
+openstack endpoint create --region RegionOne object-store admin http://${controller[0]}:8080/v1
 
 sudo apt install swift swift-proxy python3-swiftclient python3-keystoneclient python3-keystonemiddleware memcached -y &>/dev/null
 sudo curl -o /etc/swift/proxy-server.conf https://opendev.org/openstack/swift/raw/branch/master/etc/proxy-server.conf-sample
@@ -1507,9 +1662,9 @@ user_test2_tester2 = testing2 .admin
 user_test5_tester5 = testing5 service
 [filter:authtoken]
 paste.filter_factory = keystonemiddleware.auth_token:filter_factory
-www_authenticate_uri = http://controller:5000
-auth_url = http://controller:5000
-memcached_servers = controller:11211
+www_authenticate_uri = http://${controller[0]}:5000
+auth_url = http://${controller[0]}:5000
+memcached_servers = ${controller[0]}:11211
 auth_type = password
 project_domain_id = default
 user_domain_id = default

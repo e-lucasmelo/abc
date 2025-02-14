@@ -56,6 +56,11 @@ host="controller"
 # se for host block, identifique o disco que será utilizado
 disk_block="sdb"
 
+#se for host object, identifique o disco que será utilizado
+disk_object1="sdb"
+disk_object2="sdc"
+
+
 controller=("controller" "${ip_ger}.11" "${ip_Adic}.111/24") #("host" "ip_host" "ip_acesso_vm")
 compute1=("compute1" "${ip_ger}.21" "${ip_Adic}.121/24")
 compute2=("compute2" "${ip_ger}.22" "${ip_Adic}.122/24")
