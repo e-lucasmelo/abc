@@ -425,7 +425,7 @@ fi
 if [ $host_temp = "object" ]; then
 
 echo "Instalando xfsprogs e rsync..."
-sudo apt install xfsprogs rsync
+sudo apt install xfsprogs rsync -y &>/dev/null
 
 echo "formatar disco em xfs"
 sudo mkfs.xfs /dev/$disk_object1
