@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #variaveis.sh
 
 # insira o caminho completo do arquivo netplan
@@ -60,7 +62,8 @@ disk_block="sdb"
 disk_object1="sdb"
 disk_object2="sdc"
 
-
+#identifique qual(is) object storages serão instalados
+hosts_object=("object1" "" "")
 controller=("controller" "${ip_ger}.11" "${ip_Adic}.111/24") #("host" "ip_host" "ip_acesso_vm")
 compute1=("compute1" "${ip_ger}.21" "${ip_Adic}.121/24")
 compute2=("compute2" "${ip_ger}.22" "${ip_Adic}.122/24")
