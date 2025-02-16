@@ -447,8 +447,8 @@ UUID2=$(blkid -s UUID -o value "$device_object2")
 
 echo "configurando o arquivo /etc/fstab..."
 sudo bash -c "cat <<EOF >> /etc/fstab
-UUID=$device_object1 /srv/node/$disk_object1 xfs noatime 0 2
-UUID=$device_object2 /srv/node/$disk_object2 xfs noatime 0 2
+UUID=$UUID1 /srv/node/$disk_object1 xfs noatime 0 2
+UUID=$UUID2 /srv/node/$disk_object2 xfs noatime 0 2
 EOF"
 
 sudo mount /srv/node/$disk_object1
