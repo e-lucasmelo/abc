@@ -4,7 +4,7 @@ source variaveis.sh
 
 # Criar o account ring
 sudo swift-ring-builder /etc/swift/account.builder create 10 3 1
-
+sleep 2
 # ajustar o if para validar todos os discos corretamente
 if [ -z "disk_object1" ]; then
 # Adicionar dispositivos ao ring
@@ -16,42 +16,44 @@ fi
 
 # Verificar o ring
 sudo swift-ring-builder /etc/swift/account.builder
-
+sleep 2
 # Rebalancear o ring
 sudo swift-ring-builder /etc/swift/account.builder rebalance
-
+sleep 2
 #container
 
 sudo swift-ring-builder /etc/swift/container.builder create 10 3 1
-
+sleep 2
 sudo swift-ring-builder /etc/swift/container.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6201   --device $disk_object1 --weight 100
 sudo swift-ring-builder /etc/swift/container.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6201   --device $disk_object2 --weight 100
 sudo swift-ring-builder /etc/swift/container.builder rebalance
+sleep 2
 sudo swift-ring-builder /etc/swift/container.builder
 #object
 
 sudo swift-ring-builder /etc/swift/object.builder create 10 3 1
-
+sleep 2
 sudo swift-ring-builder /etc/swift/object.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6200   --device $disk_object1 --weight 100
 sudo swift-ring-builder /etc/swift/object.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6200   --device $disk_object2 --weight 100
 
-sudo swift-ring-builder /etc/swift/object.builder
-
 sudo swift-ring-builder /etc/swift/object.builder rebalance
-
+sleep 2
+sudo swift-ring-builder /etc/swift/object.builder
 
 
 sudo curl -o /etc/swift/swift.conf https://opendev.org/openstack/swift/raw/branch/master/etc/swift.conf-sample
-sudo nano /etc/swift/swift.conf
-[swift-hash]
-...
-swift_hash_path_suffix = HASH_PATH_SUFFIX
-swift_hash_path_prefix = HASH_PATH_PREFIX
+sleep 2
 
+sudo bash -c "cat <<EOF >> /etc/swift/swift.conf
+[swift-hash]
+swift_hash_path_suffix = $senha
+swift_hash_path_prefix = $senha
 [storage-policy:0]
-...
 name = Policy-0
 default = yes
+aliases = yellow, orange
+[swift-constraints]
+EOF"
 
 sudo chown -R root:swift /etc/swift
 
