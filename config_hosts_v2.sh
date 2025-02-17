@@ -26,7 +26,7 @@ else
     exit 1
 fi
 else
-echo "host não é de block, vamos seguir a configuração..."
+# echo "host não é de block, vamos seguir a configuração..."
 fi
 
 if [ "$host_temp" = "object" ]; then
@@ -49,7 +49,7 @@ if [ "$host_temp" = "object" ]; then
         exit 1
     fi
 else
-    echo "host não é de object, vamos seguir a configuração..."
+    # echo "host não é de object, vamos seguir a configuração..."
 fi
 
 # if [ $host_temp = "object" ]; then
@@ -442,9 +442,10 @@ device_object1="/dev/$disk_object1"
 device_object2="/dev/$disk_object2"
 
 # Obtém o UUID do dispositivo e armazena na variável UUID
-UUID1=$(blkid -s UUID -o value "$device_object1")
-UUID2=$(blkid -s UUID -o value "$device_object2")
+UUID1=$(sudo blkid -s UUID -o value "$device_object1")
+UUID2=$(sudo blkid -s UUID -o value "$device_object2")
 
+# echo "$UUID1"
 echo "configurando o arquivo /etc/fstab..."
 sudo bash -c "cat <<EOF >> /etc/fstab
 UUID=$UUID1 /srv/node/$disk_object1 xfs noatime 0 2

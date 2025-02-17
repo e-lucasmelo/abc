@@ -27,7 +27,7 @@ sudo swift-ring-builder /etc/swift/container.builder create 10 3 1
 sudo swift-ring-builder /etc/swift/container.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6201   --device $disk_object1 --weight 100
 sudo swift-ring-builder /etc/swift/container.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6201   --device $disk_object2 --weight 100
 sudo swift-ring-builder /etc/swift/container.builder rebalance
-
+sudo swift-ring-builder /etc/swift/container.builder
 #object
 
 sudo swift-ring-builder /etc/swift/object.builder create 10 3 1
