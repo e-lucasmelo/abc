@@ -44,7 +44,7 @@ sudo swift-ring-builder /etc/swift/object.builder
 sudo curl -o /etc/swift/swift.conf https://opendev.org/openstack/swift/raw/branch/master/etc/swift.conf-sample
 sleep 2
 
-sudo bash -c "cat <<EOF >> /etc/swift/swift.conf
+sudo bash -c "cat <<EOF > /etc/swift/swift.conf
 [swift-hash]
 swift_hash_path_suffix = $senha
 swift_hash_path_prefix = $senha
