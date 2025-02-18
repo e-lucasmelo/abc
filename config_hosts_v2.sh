@@ -26,7 +26,7 @@ else
     exit 1
 fi
 else
-# echo "host não é de block, vamos seguir a configuração..."
+echo "host não é de block, vamos seguir a configuração..."
 fi
 
 if [ "$host_temp" = "object" ]; then
@@ -49,31 +49,8 @@ if [ "$host_temp" = "object" ]; then
         exit 1
     fi
 else
-    # echo "host não é de object, vamos seguir a configuração..."
+     echo "host não é de object, vamos seguir a configuração..."
 fi
-
-# if [ $host_temp = "object" ]; then
-# if [ -n $disk_object1 ];then
-#     echo "a variável disk_object1 está vazia, preencha a variavel e inicie o script novamente."
-#     exit 1
-# elif [ -n $disk_object2 ]; then
-#     echo "a variável disk_object2 está vazia, preencha a variavel e inicie o script novamente."
-#     exit 1
-# elif [ ! -e /dev/$disk_object1 ]; then
-#     echo "o disco /dev/$disk_object1 não foi encontrado, veja se a variavel foi definida corretamente e se o disco existe"
-#     exit 1
-# elif [ ! -e /dev/$disk_object2 ]; then
-#     echo "o disco /dev/$disk_object2 não foi encontrado, veja se a variavel foi definida corretamente e se o disco existe"
-#     exit 1
-# elif [ -e /dev/$disk_object1 ] && [ -e /dev/$disk_object2 ]; then
-#     echo "os discos /dev/$disk_object1 e /dev/$disk_object2 existem, vamos seguir a configuração..."
-# else
-#     echo "/dev/$disk_block não existe, por favor adicione o disk e tente novamente"
-#     exit 1
-# fi
-# else
-# echo "host não é de object, vamos seguir a configuração..."
-# fi
 
 # Atualizar e atualizar o sistema
 echo "Atualizando o sistema..."
