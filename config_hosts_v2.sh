@@ -560,7 +560,6 @@ sudo bash -c "cat <<EOF > /etc/swift/object-server.conf
 [DEFAULT]
 bind_port = 6200
 bind_ip = ${host_array[1]}
-bind_port = 6200
 user = swift
 swift_dir = /etc/swift
 devices = /srv/node
