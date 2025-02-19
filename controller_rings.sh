@@ -1,11 +1,13 @@
 #!/bin/bash
-
+echo "carregar variaveis.sh..."
 source variaveis.sh
 
 # Criar o account ring
+echo "criar account.builder..."
 sudo swift-ring-builder /etc/swift/account.builder create 10 2 1
 # ajustar o if para validar todos os discos corretamente
 # Adicionar dispositivos ao ring
+echo "adicionar dispositivos no account.builder..."
 sudo swift-ring-builder /etc/swift/account.builder add --region 1 --zone 1 --ip ${object1[1]} --port 6202 --device $disk_object1 --weight 100
 sudo swift-ring-builder /etc/swift/account.builder add --region 1 --zone 1 --ip ${object1[1]} --port 6202 --device $disk_object2 --weight 100
 #sudo swift-ring-builder /etc/swift/account.builder add --region 1 --zone 2 --ip 10.0.0.52 --port 6202 --device sdb --weight 100
@@ -13,31 +15,48 @@ sudo swift-ring-builder /etc/swift/account.builder add --region 1 --zone 1 --ip 
 
 
 # Rebalancear o ring
+echo "criar rebalance account.builder..."
 sudo swift-ring-builder /etc/swift/account.builder rebalance
 #container
 # Verificar o ring
+echo "verificar configuração do account.builder..."
 sudo swift-ring-builder /etc/swift/account.builder
 
-
+echo "criar container.builder..."
 sudo swift-ring-builder /etc/swift/container.builder create 10 2 1
+echo "adicionar dispositivos no container.builder..."
 sudo swift-ring-builder /etc/swift/container.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6201   --device $disk_object1 --weight 100
 sudo swift-ring-builder /etc/swift/container.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6201   --device $disk_object2 --weight 100
+echo "criar rebalance container.builder..."
 sudo swift-ring-builder /etc/swift/container.builder rebalance
+echo "verificar configuração do container.builder..."
 sudo swift-ring-builder /etc/swift/container.builder
 #object
-
+echo "criar object.builder..."
 sudo swift-ring-builder /etc/swift/object.builder create 10 2 1
+echo "adicionar dispositivos object.builder..."
 sudo swift-ring-builder /etc/swift/object.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6200   --device $disk_object1 --weight 100
 sudo swift-ring-builder /etc/swift/object.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6200   --device $disk_object2 --weight 100
-
+echo "criar rebalance object.builder..."
 sudo swift-ring-builder /etc/swift/object.builder rebalance
+echo "verificar configuração object.builder..."
 sudo swift-ring-builder /etc/swift/object.builder
-
+echo "copiar arquivos para o server object..."
 sudo scp /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz lucas@192.168.0.141:/home/lucas/
-
+# ssh lucas@192.168.0.141 "mv /home/lucas/*.gz /etc/swift"
+echo "acessar o server object e executar comandos..."
+ssh lucas@192.168.0.141 <<EOF
+sudo mv /home/lucas/*.gz /etc/swift
+sudo chown -R root:swift /etc/swift
+sudo swift-init all start
+# Verificar funcionamento
+sudo chcon -R system_u:object_r:swift_data_t:s0 /srv/node
+EOF
+echo "baixar swift.conf-sample..."
 sudo curl -o /etc/swift/swift.conf https://opendev.org/openstack/swift/raw/branch/master/etc/swift.conf-sample
 sleep 2
 
+echo "configuração swift.conf..."
 sudo bash -c "cat <<EOF > /etc/swift/swift.conf
 [swift-hash]
 swift_hash_path_suffix = $senha
@@ -49,21 +68,26 @@ aliases = yellow, orange
 [swift-constraints]
 EOF"
 
+
 sudo chown -R root:swift /etc/swift
 
 sudo service memcached restart
 sudo service swift-proxy restart #verificar o nome do serviço
+
+. admin-openrc
+
+swift stat
 
 echo "Configuração do account ring concluída!"
 
 
 ### parte 2
 
-. admin-openrc
+#. admin-openrc
 
-swift stat
+#swift stat
 
-openstack container create container1
-openstack object create container1 FILE
-openstack object list container1
-openstack object save container1 FILE
+#openstack container create container1
+#openstack object create container1 FILE
+#openstack object list container1
+#openstack object save container1 FILE
