@@ -1,7 +1,6 @@
 #!/bin/bash
 echo "carregar variaveis.sh..."
 source variaveis.sh
-source admin-openrc
 
 echo "acessar o server object e executar comandos..."
 sudo mv /home/lucas/*.gz /etc/swift
