@@ -2,7 +2,7 @@
 echo "carregar variaveis.sh..."
 source variaveis.sh
 
-USUARIO="lucas"
+# USUARIO="lucas"
 
 # Verifica se a regra já existe no sudoers
 if sudo grep -q "^$USUARIO ALL=(ALL) NOPASSWD: ALL" /etc/sudoers; then
