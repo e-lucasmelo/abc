@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "carregar variaveis.sh..."
 source variaveis.sh
-
+. admin-openrc
 # USUARIO="lucas"
 
 # Verifica se a regra já existe no sudoers
