@@ -2,6 +2,17 @@
 
 source variaveis.sh
 
+# Verifica se a regra já existe no sudoers
+if sudo grep -q "^$USUARIO ALL=(ALL) NOPASSWD: ALL" /etc/sudoers; then
+    echo "O usuário $USUARIO já tem sudo sem senha."
+    exit 0
+fi
+
+# Adiciona a regra no sudoers
+echo "$USUARIO ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
+
+echo "Configuração concluída! O usuário $USUARIO pode usar sudo sem senha."
+
 
 # Função que usa indireção para acessar o array correto
 ip_gerencia(){

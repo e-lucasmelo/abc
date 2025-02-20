@@ -1,19 +1,8 @@
 #!/bin/bash
 echo "carregar variaveis.sh..."
 source variaveis.sh
-. admin-openrc
+source admin-openrc
 # USUARIO="lucas"
-
-# Verifica se a regra já existe no sudoers
-if sudo grep -q "^$USUARIO ALL=(ALL) NOPASSWD: ALL" /etc/sudoers; then
-    echo "O usuário $USUARIO já tem sudo sem senha."
-    exit 0
-fi
-
-# Adiciona a regra no sudoers
-echo "$USUARIO ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
-
-echo "Configuração concluída! O usuário $USUARIO pode usar sudo sem senha."
 
 # Criar o account ring
 echo "criar account.builder..."
@@ -54,10 +43,6 @@ echo "criar rebalance object.builder..."
 sudo swift-ring-builder /etc/swift/object.builder rebalance
 echo "verificar configuração object.builder..."
 sudo swift-ring-builder /etc/swift/object.builder
-echo "copiar arquivos para o server object..."
-sudo scp /etc/swift/swift.conf /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz lucas@192.168.0.141:/home/lucas/
-
-ssh lucas@${object1[1]} 'sudo bash /home/lucas/abc/object_rings.sh'
 
 echo "baixar swift.conf-sample..."
 sudo curl -o /etc/swift/swift.conf https://opendev.org/openstack/swift/raw/branch/master/etc/swift.conf-sample
@@ -72,6 +57,11 @@ default = yes
 aliases = yellow, orange
 [swift-constraints]
 EOF"
+
+echo "copiar arquivos para o server object..."
+sudo scp /etc/swift/swift.conf /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz lucas@192.168.0.141:/home/lucas/
+
+ssh lucas@${object1[1]} 'sudo bash /home/lucas/abc/object_rings.sh'
 
 
 sudo chown -R root:swift /etc/swift
