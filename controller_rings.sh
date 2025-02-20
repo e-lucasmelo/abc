@@ -55,7 +55,7 @@ sudo swift-ring-builder /etc/swift/object.builder rebalance
 echo "verificar configuração object.builder..."
 sudo swift-ring-builder /etc/swift/object.builder
 echo "copiar arquivos para o server object..."
-sudo scp /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz lucas@192.168.0.141:/home/lucas/
+sudo scp /etc/swift/swift.conf /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz lucas@192.168.0.141:/home/lucas/
 
 ssh lucas@${object1[1]} 'sudo bash /home/lucas/abc/object_rings.sh'
 
