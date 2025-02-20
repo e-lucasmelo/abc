@@ -2,6 +2,7 @@
 
 #variaveis.sh
 
+USUARIO="lucas"
 # insira o caminho completo do arquivo netplan
 arquivoNetplan="/etc/netplan/50-cloud-init.yaml"
 

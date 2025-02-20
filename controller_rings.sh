@@ -2,6 +2,19 @@
 echo "carregar variaveis.sh..."
 source variaveis.sh
 
+USUARIO="lucas"
+
+# Verifica se a regra já existe no sudoers
+if sudo grep -q "^$USUARIO ALL=(ALL) NOPASSWD: ALL" /etc/sudoers; then
+    echo "O usuário $USUARIO já tem sudo sem senha."
+    exit 0
+fi
+
+# Adiciona a regra no sudoers
+echo "$USUARIO ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
+
+echo "Configuração concluída! O usuário $USUARIO pode usar sudo sem senha."
+
 # Criar o account ring
 echo "criar account.builder..."
 sudo swift-ring-builder /etc/swift/account.builder create 10 2 1
@@ -44,28 +57,7 @@ sudo swift-ring-builder /etc/swift/object.builder
 echo "copiar arquivos para o server object..."
 sudo scp /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz lucas@192.168.0.141:/home/lucas/
 
-echo "acessar o server object e executar comandos..."
-ssh lucas@192.168.0.141 <<EOF
-sudo mv /home/lucas/*.gz /etc/swift
-echo "baixar swift.conf-sample..."
-sudo curl -o /etc/swift/swift.conf https://opendev.org/openstack/swift/raw/branch/master/etc/swift.conf-sample
-echo "configuração swift.conf..."
-sudo bash -c "cat <<EOF > /etc/swift/swift.conf
-[swift-hash]
-swift_hash_path_suffix = $senha
-swift_hash_path_prefix = $senha
-[storage-policy:0]
-name = Policy-0
-default = yes
-aliases = yellow, orange
-[swift-constraints]
-EOF"
-sudo chown -R root:swift /etc/swift
-# Verificar funcionamento
-sudo chcon -R system_u:object_r:swift_data_t:s0 /srv/node
-. admin-openrc
-sudo swift-init all start
-EOF
+ssh lucas@192.168.0.141 'sudo bash /home/lucas/abc/object_rings.sh'
 
 echo "baixar swift.conf-sample..."
 sudo curl -o /etc/swift/swift.conf https://opendev.org/openstack/swift/raw/branch/master/etc/swift.conf-sample
