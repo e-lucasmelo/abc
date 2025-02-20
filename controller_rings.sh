@@ -57,7 +57,7 @@ sudo swift-ring-builder /etc/swift/object.builder
 echo "copiar arquivos para o server object..."
 sudo scp /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz lucas@192.168.0.141:/home/lucas/
 
-ssh lucas@192.168.0.141 'sudo bash /home/lucas/abc/object_rings.sh'
+ssh lucas@${object1[1]} 'sudo bash /home/lucas/abc/object_rings.sh'
 
 echo "baixar swift.conf-sample..."
 sudo curl -o /etc/swift/swift.conf https://opendev.org/openstack/swift/raw/branch/master/etc/swift.conf-sample
