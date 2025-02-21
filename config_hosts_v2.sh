@@ -143,7 +143,7 @@ network:
                 via: $gateway_gerencia
                 metric: 100
 $x
-        enp0s8:
+        $interfaceProvider:
             dhcp4: false
             dhcp6: false
             accept-ra: no
