@@ -6,12 +6,12 @@ source admin-openrc
 
 # Criar o account ring
 echo "criar account.builder..."
-sudo swift-ring-builder /etc/swift/account.builder create 10 2 1
+sudo swift-ring-builder /etc/swift/account.builder create 10 1 1
 # ajustar o if para validar todos os discos corretamente
 # Adicionar dispositivos ao ring
 echo "adicionar dispositivos no account.builder..."
 sudo swift-ring-builder /etc/swift/account.builder add --region 1 --zone 1 --ip ${object1[1]} --port 6202 --device $disk_object1 --weight 100
-sudo swift-ring-builder /etc/swift/account.builder add --region 1 --zone 1 --ip ${object1[1]} --port 6202 --device $disk_object2 --weight 100
+#sudo swift-ring-builder /etc/swift/account.builder add --region 1 --zone 1 --ip ${object1[1]} --port 6202 --device $disk_object2 --weight 100
 #sudo swift-ring-builder /etc/swift/account.builder add --region 1 --zone 2 --ip 10.0.0.52 --port 6202 --device sdb --weight 100
 #sudo swift-ring-builder /etc/swift/account.builder add --region 1 --zone 2 --ip 10.0.0.52 --port 6202 --device sdc --weight 100
 
@@ -25,20 +25,20 @@ echo "verificar configuração do account.builder..."
 sudo swift-ring-builder /etc/swift/account.builder
 
 echo "criar container.builder..."
-sudo swift-ring-builder /etc/swift/container.builder create 10 2 1
+sudo swift-ring-builder /etc/swift/container.builder create 10 1 1
 echo "adicionar dispositivos no container.builder..."
 sudo swift-ring-builder /etc/swift/container.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6201   --device $disk_object1 --weight 100
-sudo swift-ring-builder /etc/swift/container.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6201   --device $disk_object2 --weight 100
+#sudo swift-ring-builder /etc/swift/container.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6201   --device $disk_object2 --weight 100
 echo "criar rebalance container.builder..."
 sudo swift-ring-builder /etc/swift/container.builder rebalance
 echo "verificar configuração do container.builder..."
 sudo swift-ring-builder /etc/swift/container.builder
 #object
 echo "criar object.builder..."
-sudo swift-ring-builder /etc/swift/object.builder create 10 2 1
+sudo swift-ring-builder /etc/swift/object.builder create 10 1 1
 echo "adicionar dispositivos object.builder..."
 sudo swift-ring-builder /etc/swift/object.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6200   --device $disk_object1 --weight 100
-sudo swift-ring-builder /etc/swift/object.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6200   --device $disk_object2 --weight 100
+#sudo swift-ring-builder /etc/swift/object.builder   add --region 1 --zone 1 --ip ${object1[1]} --port 6200   --device $disk_object2 --weight 100
 echo "criar rebalance object.builder..."
 sudo swift-ring-builder /etc/swift/object.builder rebalance
 echo "verificar configuração object.builder..."
