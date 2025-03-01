@@ -31,8 +31,8 @@ interfaceProvider="enp0s8" # interface da rede provider do openstack
 # para a rede provider
 #altere conforme a sua rede
 #intervalo de ips flutuantes da rede provider
-ip_inicio="192.168.0.100"
-ip_fim="192.168.0.130"
+ip_inicio="192.168.0.200"
+ip_fim="192.168.0.220"
 
 #gateway da rede provider
 gateway_provider="192.168.0.1"
@@ -52,7 +52,7 @@ ip_Adic="192.168.0"
 
 
 # qual host está configurando?
-# controller, compute1, compute2, compute3, block1, block2, block3
+# controller, compute1, compute2, compute3, block1, block2, block3,object1, object2, object3
 
 host="controller"
 
@@ -60,8 +60,9 @@ host="controller"
 disk_block="sdb"
 
 #se for host object, identifique o disco que será utilizado
+#no host controller deve colocar o mesmo nome de disco que será usado no object
 disk_object1="sdb"
-disk_object2="sdc"
+#disk_object2="sdc"
 
 #identifique qual(is) object storages serão instalados
 hosts_object=("object1" "" "")

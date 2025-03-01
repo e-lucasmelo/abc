@@ -44,17 +44,11 @@ if [ "$host_temp" = "object" ]; then
     if [ -z "$disk_object1" ]; then
         echo "a variável disk_object1 está vazia, preencha a variável e inicie o script novamente."
         exit 1
-    elif [ -z "$disk_object2" ]; then
-        echo "a variável disk_object2 está vazia, preencha a variável e inicie o script novamente."
-        exit 1
     elif [ ! -e "/dev/$disk_object1" ]; then
         echo "o disco /dev/$disk_object1 não foi encontrado, veja se a variável foi definida corretamente e se o disco existe"
         exit 1
-    elif [ ! -e "/dev/$disk_object2" ]; then
-        echo "o disco /dev/$disk_object2 não foi encontrado, veja se a variável foi definida corretamente e se o disco existe"
-        exit 1
-    elif [ -e "/dev/$disk_object1" ] && [ -e "/dev/$disk_object2" ]; then
-        echo "os discos /dev/$disk_object1 e /dev/$disk_object2 existem, vamos seguir a configuração..."
+    elif [ -e "/dev/$disk_object1" ]; then
+        echo "o disco /dev/$disk_object1 existe, vamos seguir a configuração..."
     else
         echo "Os discos não existem, por favor adicione-os e tente novamente."
         exit 1
@@ -417,31 +411,31 @@ sudo apt install xfsprogs rsync -y &>/dev/null
 
 echo "formatar disco em xfs"
 sudo mkfs.xfs /dev/$disk_object1
-sudo mkfs.xfs /dev/$disk_object2
+#sudo mkfs.xfs /dev/$disk_object2
 
 echo "criar a estrutura do diretorio montado"
 sudo mkdir -p /srv/node/$disk_object1
-sudo mkdir -p /srv/node/$disk_object2
+#sudo mkdir -p /srv/node/$disk_object2
 
 #sudo blkid
 
 # Define o dispositivo (substitua /dev/sdX pelo seu dispositivo)
 device_object1="/dev/$disk_object1"
-device_object2="/dev/$disk_object2"
+#device_object2="/dev/$disk_object2"
 
 # Obtém o UUID do dispositivo e armazena na variável UUID
 UUID1=$(sudo blkid -s UUID -o value "$device_object1")
-UUID2=$(sudo blkid -s UUID -o value "$device_object2")
+#UUID2=$(sudo blkid -s UUID -o value "$device_object2")
 
 # echo "$UUID1"
 echo "configurando o arquivo /etc/fstab..."
 sudo bash -c "cat <<EOF >> /etc/fstab
 UUID=$UUID1 /srv/node/$disk_object1 xfs noatime 0 2
-UUID=$UUID2 /srv/node/$disk_object2 xfs noatime 0 2
+#UUID=$UUID2 /srv/node/$disk_object2 xfs noatime 0 2
 EOF"
 
 sudo mount /srv/node/$disk_object1
-sudo mount /srv/node/$disk_object2
+#sudo mount /srv/node/$disk_object2
 
 sudo bash -c "cat <<EOF > /etc/rsyncd.conf
 uid = swift
@@ -918,6 +912,8 @@ export OS_IDENTITY_API_VERSION=3
 # Criar projetos e usuários no OpenStack
 echo "configurando projeto dos serviços..."
 openstack project create --domain default --description "Service Project" service
+echo "configurando o papel de 'usuário...'"
+openstack role create user
 # echo "configurando projeto de demo..."
 # openstack project create --domain default --description "Demo Project" myproject
 # echo "configurando usuário myuser ..."
