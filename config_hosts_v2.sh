@@ -1681,7 +1681,7 @@ password = $senha
 delay_auth_decision = True
 [filter:keystoneauth]
 use = egg:swift#keystoneauth
-operator_roles = admin,user
+operator_roles = admin,user,manager
 [filter:s3api]
 use = egg:swift#s3api
 [filter:s3token]
