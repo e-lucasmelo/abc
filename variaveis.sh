@@ -2,7 +2,9 @@
 
 #variaveis.sh
 
+# insira o nome do usuário utilizado na configuração
 USUARIO="lucas"
+
 # insira o caminho completo do arquivo netplan
 arquivoNetplan="/etc/netplan/50-cloud-init.yaml"
 
@@ -10,7 +12,7 @@ arquivoNetplan="/etc/netplan/50-cloud-init.yaml"
 # "ethernets" ou "wifis"
 rede_ger="ethernets"
 
-# se for "wifi", insira o nome da rede e senha
+# se for "wifis", insira o nome da rede e senha
 rede_wifi=
 senha_wifi=
 
@@ -22,6 +24,7 @@ ip_ger="192.168.1"
 
 # insira a parte final do ip do gateway da rede de gerencia
 gateway_gerencia="${ip_ger}.1"
+
 # insira os ips dns separados por espaço
 dns=("181.213.132.2" "181.213.132.3")
 
@@ -29,19 +32,22 @@ dns=("181.213.132.2" "181.213.132.3")
 interfaceProvider="enp0s8" # interface da rede provider do openstack
 
 # para a rede provider
-#altere conforme a sua rede
+# insira as 3 primeiras partes do ip da sua rede que fornecerá os ips flutuantes
+ip_provider="192.168.0"
+
+#altere a parte final do ip
 #intervalo de ips flutuantes da rede provider
-ip_inicio="192.168.0.200"
-ip_fim="192.168.0.220"
+ip_inicio="$ip_provider.200"
+ip_fim="$ip_provider.220"
 
 #gateway da rede provider
-gateway_provider="192.168.0.1"
+gateway_provider="$ip_provider.1"
 
 #dns da rede provider
-dns_provider="192.168.0.1"
+dns_provider="$ip_provider.1"
 
 #subnet da rede provider(deve ser igual a sua rede local)
-subnet_provider="192.168.0.0/24"
+subnet_provider="$ip_provider.0/24"
 
 # essa interface adicional só é usado no virtualbox para acessar direto a vm em questão
 #insira o nome da interface de rede

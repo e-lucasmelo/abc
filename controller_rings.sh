@@ -2,8 +2,6 @@
 echo "carregar variaveis.sh..."
 source variaveis.sh
 source admin-openrc
-# USUARIO="lucas"
-
 # Criar o account ring
 echo "criar account.builder..."
 sudo swift-ring-builder /etc/swift/account.builder create 10 1 1
@@ -59,9 +57,9 @@ aliases = yellow, orange
 EOF"
 
 echo "copiar arquivos para o server object..."
-sudo scp /etc/swift/swift.conf /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz $USUARIO@${object1[1]}:/home/lucas/
+sudo scp /etc/swift/swift.conf /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz $USUARIO@${object1[1]}:/home/$USUARIO/
 
-ssh $USUARIO@${object1[1]} 'sudo bash /home/lucas/abc/object_rings.sh'
+ssh $USUARIO@${object1[1]} "sudo bash /home/$USUARIO/abc/object_rings.sh"
 
 
 sudo chown -R root:swift /etc/swift

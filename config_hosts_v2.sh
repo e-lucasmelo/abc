@@ -6,13 +6,12 @@ source variaveis.sh
 if sudo grep -q "^$USUARIO ALL=(ALL) NOPASSWD: ALL" /etc/sudoers; then
     echo "O usuário $USUARIO já tem sudo sem senha."
 #    exit 0
-fi
-
+else
 # Adiciona a regra no sudoers
 echo "$USUARIO ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
 
 echo "Configuração concluída! O usuário $USUARIO pode usar sudo sem senha."
-
+fi
 
 # Função que usa indireção para acessar o array correto
 ip_gerencia(){
@@ -162,7 +161,7 @@ sudo netplan apply
 # Testando a conexão de rede com 3 tentativas
 echo "Testando a conexão de rede..."
 tentativas=0
-max_tentativas=3
+max_tentativas=10
 
 while ! curl -s --connect-timeout 5 http://www.google.com --output /dev/null; do
     tentativas=$((tentativas + 1))
