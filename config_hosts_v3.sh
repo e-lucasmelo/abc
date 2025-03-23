@@ -1000,6 +1000,7 @@ echo "Configurando o arquivo /etc/glance/glance-api.conf..."
 sudo bash -c "cat <<EOF > /etc/glance/glance-api.conf
 [DEFAULT]
 enabled_backends=fs:file
+#enabled_backends=cinder:cinder
 [database]
 connection = mysql+pymysql://glance:$senha@${controller[0]}/glance
 [keystone_authtoken]
@@ -1016,6 +1017,7 @@ password = $senha
 flavor = keystone
 [glance_store]
 default_backend = fs
+#default_backend = cinder
 [fs]
 filesystem_store_datadir = /var/lib/glance/images/
 [oslo_limit]
@@ -1027,6 +1029,8 @@ system_scope = all
 password = $senha
 endpoint_id = 
 region_name = RegionOne
+[cinder]
+#store_description = "Cinder backend"
 EOF"
 
 # Obter o ID do endpoint público de imagem
