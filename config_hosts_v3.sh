@@ -1,8 +1,9 @@
 #!/bin/bash
 
+#carrega as variáveis
 source variaveis.sh
 
-# Verifica se a regra já existe no sudoers
+# Verifica se o usuário está configurado para usar o sudo sem digitar senha
 if sudo grep -q "^$USUARIO ALL=(ALL) NOPASSWD: ALL" /etc/sudoers; then
     echo "O usuário $USUARIO já tem sudo sem senha."
 #    exit 0
