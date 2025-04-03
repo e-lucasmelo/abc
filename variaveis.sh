@@ -8,7 +8,7 @@ USUARIO="lucas"
 # insira o caminho completo do arquivo netplan
 arquivoNetplan="/etc/netplan/50-cloud-init.yaml"
 
-# insira o tipo de rede de gerenciamento
+# insira o tipo de rede de gerenciamento e provider
 # "ethernets" ou "wifis"
 rede_ger="ethernets"
 
