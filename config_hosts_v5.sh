@@ -224,8 +224,8 @@ echo "Verificando fontes do Chrony..."
 sudo chronyc sources
 
 # Adicionar o repositório do OpenStack Caracal
-echo "Adicionando o repositório do OpenStack Caracal..."
-sudo add-apt-repository -y cloud-archive:caracal &>/dev/null
+#echo "Adicionando o repositório do OpenStack Caracal..."
+#sudo add-apt-repository -y cloud-archive:caracal &>/dev/null
 
 # Instalar os pacotes necessários
 echo "Instalando nova-compute e dependências..."
@@ -1335,7 +1335,7 @@ echo "Configurando o arquivo /etc/neutron/neutron.conf..."
 sudo bash -c "cat <<EOF > /etc/neutron/neutron.conf
 [DEFAULT]
 core_plugin = ml2
-service_plugins = router
+service_plugins = router,vpnaas
 transport_url = rabbit://openstack:$senha@${controller[0]}
 auth_strategy = keystone
 notify_nova_on_port_status_changes = true
@@ -1787,6 +1787,28 @@ use = egg:swift#listing_formats
 [filter:symlink]
 use = egg:swift#symlink
 EOF"
+
+echo "instalando pacotes para a VPN..."
+sudo apt install python3-neutron-vpnaas neutron-vpnaas-common python3-neutron-vpnaas-dashboard python3-pip gettext -y
+
+sudo bash -c "cat <<EOF > /etc/neutron/neutron_vpnaas.conf
+[service_providers]
+service_provider = VPN:strongswan:neutron_vpnaas.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+EOF"
+
+sudo bash -c "cat <<EOF > /etc/neutron/vpn_agent.ini
+[DEFAULT]
+interface_driver = openvswitch
+vpn_device_driver = neutron_vpnaas.services.vpn.device_drivers.ipsec.IPsecDriver
+state_path = /var/lib/neutron
+debug = True
+log_file = /var/log/neutron/vpn-agent.log
+periodic_interval = 10
+EOF"
+sudo -u neutron /bin/sh -c "neutron-db-manage --subproject neutron-vpnaas upgrade head"
+sudo systemctl restart neutron* apach* open*
+
 echo "configuração concluída!"
 echo "Faça a configuração do host compute."
 fi
+
