@@ -1038,7 +1038,7 @@ password = $senha
 endpoint_id = 
 region_name = RegionOne
 [cinder]
-#store_description = "Cinder backend"
+#store_description = \"Cinder backend\"
 EOF"
 
 # Obter o ID do endpoint público de imagem
