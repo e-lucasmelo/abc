@@ -1134,6 +1134,10 @@ sudo -u placement /bin/sh -c "placement-manage db sync" &>/dev/null
 echo "Reiniciando o serviço Apache..."
 sudo service apache2 restart
 
+# Instalando python3-osc-placement
+echo "Instalando python3-osc-placement..."
+sudo apt install python3-osc-placement -y
+
 # Verificar a atualização do Placement
 echo "Verificando o status do Placement..."
 . admin-openrc
@@ -1650,10 +1654,10 @@ echo "configuração do Cinder finalizada"
 ##fazer a parte do block e quando terminar voltar aqui
 
 echo "Carregando variáveis de ambiente do OpenStack..."
-. admin-openrc
+source admin-openrc
 
 echo "verificando os hosts compute..."
-sudo -u nova /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose"
+sudo -u nova /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" &>/dev/null
 
 echo "verificar a lista de serviços, catálogo e imagem"
 openstack compute service list
