@@ -224,8 +224,8 @@ echo "Verificando fontes do Chrony..."
 sudo chronyc sources
 
 # Adicionar o repositório do OpenStack Caracal
-#echo "Adicionando o repositório do OpenStack Caracal..."
-#sudo add-apt-repository -y cloud-archive:caracal &>/dev/null
+echo "Adicionando o repositório do OpenStack zed..."
+sudo add-apt-repository -y cloud-archive:zed &>/dev/null
 
 # Instalar os pacotes necessários
 echo "Instalando nova-compute e dependências..."
@@ -1406,6 +1406,10 @@ echo "Configurando o arquivo /etc/neutron/l3_agent.ini..."
 sudo bash -c 'cat <<EOF > /etc/neutron/l3_agent.ini
 [DEFAULT]
 interface_driver = openvswitch
+[AGENT]
+extensions = vpnaas
+[vpnagent]
+vpn_device_driver = neutron_vpnaas.services.vpn.device_drivers.strongswan_ipsec.StrongSwanDriver
 EOF'
 
 echo "Configurando o arquivo /etc/neutron/dhcp_agent.ini..."
