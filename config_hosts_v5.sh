@@ -684,8 +684,8 @@ sudo bash -c "cat <<EOF > /etc/neutron/neutron.conf
 core_plugin = ml2
 transport_url = rabbit://openstack:$senha@${controller[0]}
 
-#[agent]
-#root_helper = \"sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf\"
+[agent]
+root_helper = \"sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf\"
 
 [oslo_concurrency]
 lock_path = /var/lib/neutron/tmp
@@ -1345,8 +1345,8 @@ auth_strategy = keystone
 notify_nova_on_port_status_changes = true
 notify_nova_on_port_data_changes = true
 
-#[agent]
-#root_helper = \"sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf\"
+[agent]
+root_helper = \"sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf\"
 
 [database]
 connection = mysql+pymysql://neutron:$senha@${controller[0]}/neutron
