@@ -1345,8 +1345,8 @@ auth_strategy = keystone
 notify_nova_on_port_status_changes = true
 notify_nova_on_port_data_changes = true
 
-[agent]
-root_helper = \"sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf\"
+#[agent]
+#root_helper = \"sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf\"
 
 [database]
 connection = mysql+pymysql://neutron:$senha@${controller[0]}/neutron
