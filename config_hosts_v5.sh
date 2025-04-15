@@ -1136,7 +1136,7 @@ sudo service apache2 restart
 
 # Instalando python3-osc-placement
 echo "Instalando python3-osc-placement..."
-sudo apt install python3-osc-placement -y
+sudo apt install python3-osc-placement -y &>/dev/null
 
 # Verificar a atualização do Placement
 echo "Verificando o status do Placement..."
@@ -1797,7 +1797,7 @@ use = egg:swift#symlink
 EOF"
 
 echo "instalando pacotes para a VPN..."
-sudo apt install python3-neutron-vpnaas neutron-vpnaas-common python3-neutron-vpnaas-dashboard python3-pip gettext -y
+sudo apt install python3-neutron-vpnaas neutron-vpnaas-common python3-neutron-vpnaas-dashboard python3-pip gettext -y &>/dev/null
 
 sudo bash -c "cat <<EOF > /etc/neutron/neutron_vpnaas.conf
 [service_providers]
