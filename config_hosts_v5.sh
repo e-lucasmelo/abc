@@ -224,8 +224,8 @@ echo "Verificando fontes do Chrony..."
 sudo chronyc sources
 
 # Adicionar o repositório do OpenStack Caracal
-echo "Adicionando o repositório do OpenStack zed..."
-sudo add-apt-repository -y cloud-archive:zed &>/dev/null
+echo "Adicionando o repositório do OpenStack bobcat..."
+sudo add-apt-repository -y cloud-archive:bobcat &>/dev/null
 
 # Instalar os pacotes necessários
 echo "Instalando nova-compute e dependências..."
