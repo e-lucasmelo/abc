@@ -3,7 +3,15 @@
 #variaveis.sh
 
 # insira o nome do usuário utilizado na configuração
-USUARIO="lucas"
+USUARIO="ubuntu"
+
+# qual repsitório do openstack vai utilizar?
+# "zed", "antelope", "bobcat", "caracal"
+# com o repositorio caracal não vai funcionar o vpnaas neste script
+# sugestão é usar o "bobcat"
+repositorio="bobcat"
+
+valid_releases=("zed" "antelope" "bobcat" "caracal")
 
 # insira o caminho completo do arquivo netplan
 arquivoNetplan="/etc/netplan/50-cloud-init.yaml"
@@ -59,19 +67,25 @@ ip_Adic="192.168.0"
 
 # qual host está configurando?
 # controller, compute1, compute2, compute3, block1, block2, block3,object1, object2, object3
-
 host="controller"
 
-# se for host block, identifique o disco que será utilizado
+# se for host compute, vai usar também como host block?
+# digite "sim" ou "nao"
+computeBlock="nao"
+
+# se for host block ou computeBlock, identifique o disco que será utilizado
 disk_block="sdb"
 
-#se for host object, identifique o disco que será utilizado
+# se for host compute, vai usar também como host object?
+# digite "sim" ou "nao"
+computeObject="nao"
+
+#se for host object ou computeObject, identifique o disco que será utilizado
 #no host controller deve colocar o mesmo nome de disco que será usado no object
 disk_object1="sdb"
 #disk_object2="sdc"
 
 #identifique qual(is) object storages serão instalados
-hosts_object=("object1" "" "")
 controller=("controller" "${ip_ger}.11" "${ip_Adic}.111/24") #("host" "ip_host" "ip_acesso_vm")
 compute1=("compute1" "${ip_ger}.21" "${ip_Adic}.121/24")
 compute2=("compute2" "${ip_ger}.22" "${ip_Adic}.122/24")

@@ -3,6 +3,13 @@
 #carrega as variáveis
 source variaveis.sh
 
+# Verifica se a variável está definida e se é um valor válido
+if [[ -z "$repositorio" || ! " ${valid_releases[@]} " =~ " $repositorio " ]]; then
+    echo "Erro: variável 'repositorio' não definida ou contém um valor inválido."
+    echo "Valores válidos: ${valid_releases[*]}"
+    exit 1
+fi
+
 # Verifica se o usuário está configurado para usar o sudo sem digitar senha
 if sudo grep -q "^$USUARIO ALL=(ALL) NOPASSWD: ALL" /etc/sudoers; then
     echo "O usuário $USUARIO já tem sudo sem senha."
@@ -24,11 +31,12 @@ ip_gerencia(){
 host_array=($(ip_gerencia))
 host_temp=$(echo "$host" | sed 's/[0-9]*$//')
 
-if [ $host_temp = "block" ]; then
+# no if é aconselhável colocar as variáveis entre aspas também
+if [ "$host_temp" = "block" ] || [ "$computeBlock" = "sim" ]; then
 
-if [ -b /dev/$disk_block ]; then
+if [ -b "/dev/$disk_block" ]; then
     echo "/dev/$disk_block existe, vamos seguir a configuração..."
-elif [ -n $disk_block ];then
+elif [ -n "$disk_block" ];then
     echo "a variável disk_block está vazia, não podemos seguir com a configuração."
     echo "preencha a variavel e inicie o script novamente."
     exit 1
@@ -37,10 +45,10 @@ else
     exit 1
 fi
 else
-echo "host não é de block, vamos seguir a configuração..."
+#echo "host não é de block, vamos seguir a configuração..."
 fi
 
-if [ "$host_temp" = "object" ]; then
+if [ "$host_temp" = "object" ] || [ "$computeObject" = "sim" ]; then
     if [ -z "$disk_object1" ]; then
         echo "a variável disk_object1 está vazia, preencha a variável e inicie o script novamente."
         exit 1
@@ -54,7 +62,7 @@ if [ "$host_temp" = "object" ]; then
         exit 1
     fi
 else
-     echo "host não é de object, vamos seguir a configuração..."
+     #echo "host não é de object, vamos seguir a configuração..."
 fi
 
 # Atualizar e atualizar o sistema
@@ -66,10 +74,23 @@ sudo apt upgrade -y &>/dev/null
 echo "Definindo o hostname como '${host_array[0]}'..."
 sudo hostnamectl set-hostname ${host_array[0]}
 
-echo "desativando NetworkManager..."
-sudo systemctl disable --now NetworkManager
-echo "ativando systemd-networkd"
-sudo systemctl enable --now systemd-networkd
+#!/bin/bash
+
+# Verifica se o serviço NetworkManager existe
+if systemctl list-unit-files | grep -q '^NetworkManager.service'; then
+    # Verifica se o NetworkManager está ativo
+    if systemctl is-active --quiet NetworkManager; then
+        echo "Desativando NetworkManager..."
+        sudo systemctl disable --now NetworkManager
+        echo "Ativando systemd-networkd..."
+        sudo systemctl enable --now systemd-networkd
+    else
+        echo "NetworkManager não está ativo. Nenhuma ação necessária."
+    fi
+else
+    echo "NetworkManager não está instalado ou não gerenciado pelo systemd."
+fi
+
 
 # Editar o arquivo /etc/hosts
 echo "Adicionando entradas no /etc/hosts..."
@@ -224,8 +245,8 @@ echo "Verificando fontes do Chrony..."
 sudo chronyc sources
 
 # Adicionar o repositório do OpenStack Caracal
-echo "Adicionando o repositório do OpenStack zed..."
-sudo add-apt-repository -y cloud-archive:zed &>/dev/null
+echo "Adicionando o repositório do OpenStack $repositorio..."
+sudo add-apt-repository -y cloud-archive:$repositorio &>/dev/null
 
 # Instalar os pacotes necessários
 echo "Instalando nova-compute e dependências..."
@@ -233,9 +254,12 @@ sudo apt install nova-compute -y &>/dev/null
 echo "Instalando python3-openstackclient..."
 sudo apt install python3-openstackclient -y &>/dev/null
 
-if [ $host_temp = "block" ]; then
+if [ $host_temp = "block" ] || [ $host_temp = "object" ]; then
 echo "desabilitando apenas o serviço do nova-compute para o host ${host_array[0]}..."
 sudo systemctl disable --now nova-compute
+fi
+
+if [ $host_temp = "block" ] || [ $computeBlock = "sim" ]; then
 
 echo "instalação do LVM"
 # Configurar LVM
@@ -411,7 +435,7 @@ echo "faça a configuração de update do host controller"
 
 fi
 
-if [ $host_temp = "object" ]; then
+if [ "$host_temp" = "object" ] || [ "$computeObject" = "sim" ]; then
 
 echo "Instalando xfsprogs e rsync..."
 sudo apt install xfsprogs rsync -y &>/dev/null
@@ -837,22 +861,6 @@ sudo keystone-manage bootstrap --bootstrap-password $senha \
   --bootstrap-internal-url http://${controller[0]}:5000/v3/ \
   --bootstrap-public-url http://${controller[0]}:5000/v3/ \
   --bootstrap-region-id RegionOne
-
-
-# echo "criando região..."
-# openstack region create RegionOne
-# echo "criando usuário admin no dominio default..."
-# openstack user create --domain default --password $senha admin
-# echo "adicionando o usuário admin para o projeto admin..."
-# openstack role add --project admin --user admin admin
-# echo "criando o serviço para o Keystone..."
-# openstack service create --name keystone --description "OpenStack Identity" identity
-# echo "criando endpoint admin..."
-# openstack endpoint create --region RegionOne identity admin http://${controller[0]}:5000/v3/
-# echo "criando endpoint internal..."
-# openstack endpoint create --region RegionOne identity internal http://${controller[0]}:5000/v3/
-# echo "criando endpoint public..."
-# openstack endpoint create --region RegionOne identity public http://${controller[0]}:5000/v3/
 
 
 # Configuração do Apache para o Keystone
