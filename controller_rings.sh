@@ -64,7 +64,7 @@ aliases = yellow, orange
 EOF"
 
 echo "copiar arquivos para o server object..."
-sudo scp /etc/swift/swift.conf /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz $USUARIO@"$ip_object1":/temp/
+sudo scp /etc/swift/swift.conf /etc/swift/account.ring.gz /etc/swift/container.ring.gz /etc/swift/object.ring.gz $USUARIO@"$ip_object1":/tmp/
 
 ssh $USUARIO@"$ip_object1" "sudo bash /home/$USUARIO/abc/object_rings.sh"
 
