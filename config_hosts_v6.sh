@@ -45,7 +45,7 @@ else
     exit 1
 fi
 else
-#echo "host não é de block, vamos seguir a configuração..."
+echo "host não é de block, vamos seguir a configuração..."
 fi
 
 if [ "$host_temp" = "object" ] || [ "$computeObject" = "sim" ]; then
@@ -62,7 +62,7 @@ if [ "$host_temp" = "object" ] || [ "$computeObject" = "sim" ]; then
         exit 1
     fi
 else
-     #echo "host não é de object, vamos seguir a configuração..."
+    echo "host não é de object, vamos seguir a configuração..."
 fi
 
 # Atualizar e atualizar o sistema
