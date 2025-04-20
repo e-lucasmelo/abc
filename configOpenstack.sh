@@ -44,7 +44,15 @@ echo " adicionando porta "3306"..."
 openstack security group rule create grupoTeste --protocol tcp --dst-port 3306 --ingress
 echo " adicionando porta "443"..."
 openstack security group rule create grupoTeste --protocol tcp --dst-port 443 --ingress
-echo " criando o flavor m1.nano..."
-openstack flavor create --id 0 --vcpus 1 --ram 64 --disk 1 m1.nano
-echo "criando a instância cirros com o favor m1.nano, rede: selfservice e grupo de segurança: grupoTeste"
-openstack server create --flavor m1.nano --image cirros --network selfservice --security-group grupoTeste Cirros
+echo " criando flavors ..."
+openstack flavor create --id 0 --vcpus 1 --ram 64 --disk 1 m1.tiny
+openstack flavor create --id 1 --vcpus 1 --ram 2048 --disk 20 m1.small
+openstack flavor create --id 2 --vcpus 2 --ram 2048 --disk 50 m1.medium
+openstack flavor create --id 3 --vcpus 2 --ram 4096 --disk 50 "m1.medium x2"
+openstack flavor create --id 4 --vcpus 4 --ram 4096 --disk 80 m1.large
+openstack flavor create --id 5 --vcpus 8 --ram 8192 --disk 100 m1.xlarge
+openstack flavor create --id 6 --vcpus 12 --ram 12288 --disk 100 m1.xtreme
+
+echo "criando a instância cirros com o flavor m1.tiny, rede: selfservice e grupo de segurança: grupoTeste"
+openstack server create --flavor m1.tiny --image cirros --network selfservice --security-group grupoTeste Cirros
+
