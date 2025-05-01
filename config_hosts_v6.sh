@@ -897,7 +897,7 @@ Include ports.conf
         Require all granted
 </Directory>
 AccessFileName .htaccess
-<FilesMatch \"^\.ht\">
+<FilesMatch "^\.ht">
         Require all denied
 </FilesMatch>
 LogFormat "%v:%p %h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\"" vhost_combined
