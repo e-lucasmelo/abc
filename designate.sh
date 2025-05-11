@@ -2,6 +2,7 @@
 
 #carrega as variáveis
 source variaveis.sh
+source admin-openrc
 
 # Configuração do banco de dados MySQL
 echo "Configuração do banco de dados MySQL para o Designate..."
