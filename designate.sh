@@ -35,7 +35,7 @@ sudo apt install designate bind9 bind9utils bind9-doc -y &>/dev/null
 
 # criando rndc key
 echo "criando rndc key..."
-rndc-confgen -a -k designate -c /etc/bind/rndc.key -y &>/dev/null
+rndc-confgen -a -k designate -c /etc/bind/rndc.key &>/dev/null
 
 # criando arquivo named.conf.options
 "criando arquivo /etc/bind/named.conf.options..."
