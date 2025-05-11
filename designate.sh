@@ -39,7 +39,7 @@ echo "criando rndc key..."
 rndc-confgen -a -k designate -c /etc/bind/rndc.key &>/dev/null
 
 # criando arquivo named.conf.options
-"criando arquivo /etc/bind/named.conf.options..."
+echo "criando arquivo /etc/bind/named.conf.options..."
 sudo bash -c "cat <<EOF > /etc/bind/named.conf.options
 include \"/etc/bind/rndc.key\";
 
