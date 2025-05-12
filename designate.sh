@@ -38,6 +38,10 @@ sudo apt install designate bind9 bind9utils bind9-doc -y &>/dev/null
 echo "criando rndc key..."
 rndc-confgen -a -k designate -c /etc/bind/rndc.key &>/dev/null
 
+# reiniciando o serviço named.service
+echo "reiniciando o serviço named.service..."
+sudo systemctl restart named.service
+
 # criando arquivo named.conf.options
 echo "criando arquivo /etc/bind/named.conf.options..."
 sudo bash -c "cat <<EOF > /etc/bind/named.conf.options
