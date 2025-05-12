@@ -225,7 +225,7 @@ EOF"
 
 # atualização do banco de dados do designate pool
 echo "atualizando o banco de dados do designate pool"
-sudo -u designate /bin/sh -c "designate-manage pool update" &>/dev/null
+sudo -u designate /bin/sh -c "designate-manage pool update --file /etc/designate/pools.yaml" &>/dev/null
 
 # instalando o designate-worker designate-producer designate-mdns
 echo "instalando o designate-worker designate-producer designate-mdns..."
