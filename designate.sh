@@ -178,4 +178,6 @@ sudo apt install python3-designate-dashboard -y &>/dev/null
 echo "reiniciando apache para o Horizon"
 sudo systemctl restart apache2 &>/dev/null
 
+echo "reiniciando os serviços designate e named"
+sudo systemctl restart designate-agent designate-worker designate-central designate-producer designate-mdns named
 echo "configuração finalizada do designate"
