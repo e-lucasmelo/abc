@@ -121,3 +121,6 @@ sudo apt install python3-designate-dashboard
 sudo systemctl restart apache2
 
 
+
+
+sudo named-checkconf
