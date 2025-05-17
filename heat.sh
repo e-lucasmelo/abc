@@ -17,7 +17,7 @@ echo "criar usuário heat para openstack..."
 openstack user create --domain default --password $senha heat
 
 # adicionar a role do usuario heat
-echo "adicionar a role do usuario designate..."
+echo "adicionar a role do usuario heat..."
 openstack role add --project service --user heat admin
 
 
@@ -94,3 +94,12 @@ sudo systemctl restart heat-api heat-api-cfn heat-engine
 
 source admin-openrc
 openstack orchestration service list
+
+# instalando o heat no dashboard
+echo "instalando o heat no dashboard..."
+sudo apt install python3-heat-dashboard -y &>/dev/null
+
+# reiniciando o apache
+echo "reiniciando o apache2..."
+sudo systemctl restart apache2
+
