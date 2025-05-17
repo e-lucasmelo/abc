@@ -827,7 +827,7 @@ if [ "$ubuntu_full_version" = "24.04" ]; then
 echo "Habilitando o serviço etcd-server..."
 sudo systemctl enable etcd=server &>/dev/null
 echo "Reiniciando o serviço etcd-server..."
-sudo systemctl restart etcd-server
+sudo systemctl restart etcd*
 else
     # Habilitar e reiniciar o serviço etcd
 echo "Habilitando o serviço etcd..."
@@ -1162,9 +1162,16 @@ sudo -u placement /bin/sh -c "placement-manage db sync" &>/dev/null
 echo "Reiniciando o serviço Apache..."
 sudo service apache2 restart
 
+
+ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
+
+if [ "$ubuntu_full_version" = "24.04" ]; then
 # Instalando python3-osc-placement
 echo "Instalando python3-osc-placement..."
 sudo apt install python3-osc-placement -y &>/dev/null
+else
+echo "versão do ubuntu não precisa do python3-osc-placement...instalação abortada"
+fi
 
 # Verificar a atualização do Placement
 echo "Verificando o status do Placement..."
