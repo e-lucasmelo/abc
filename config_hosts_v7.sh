@@ -1870,6 +1870,9 @@ EOF"
 #sudo -u neutron /bin/sh -c "neutron-db-manage --subproject neutron-vpnaas upgrade head"
 sudo systemctl restart neutron* apach* open*
 
+bash designate.sh
+bash heat.sh
+
 echo "configuração concluída!"
 echo "Faça a configuração do host compute."
 fi
