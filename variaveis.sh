@@ -6,12 +6,12 @@
 USUARIO="ubuntu"
 
 # qual repsitório do openstack vai utilizar?
-# "zed", "antelope", "bobcat", "caracal"
+# "zed", "antelope", "bobcat", "caracal","Dalmatian"
 # com o repositorio caracal não vai funcionar o vpnaas neste script
-# sugestão é usar o "bobcat"
+
 repositorio="bobcat"
 
-valid_releases=("zed" "antelope" "bobcat" "caracal")
+valid_releases=("zed" "antelope" "bobcat" "caracal" "dalmatian")
 
 # insira o caminho completo do arquivo netplan
 arquivoNetplan="/etc/netplan/50-cloud-init.yaml"

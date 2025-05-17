@@ -56,7 +56,7 @@ openstack role create heat_stack_user
 
 # instalando os pacotes necessários
 echo "instalando os pacotes necessários..."
-sudo apt install heat-api heat-api-cfn heat-engine
+sudo apt install heat-api heat-api-cfn heat-engine -y &>/dev/null
 
 sudo bash -c "cat <<EOF > /etc/heat/heat.conf
 [DEFAULT]

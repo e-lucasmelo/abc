@@ -10,6 +10,24 @@ if [[ -z "$repositorio" || ! " ${valid_releases[@]} " =~ " $repositorio " ]]; th
     exit 1
 fi
 
+# Pega a versão completa, ex: "24.04"
+ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
+
+# Extrai apenas a parte antes do ponto, ex: "24"
+ubuntu_major_version=$(echo "$ubuntu_full_version" | cut -d '.' -f 1)
+
+# Validação das combinações
+if [[ "$repositorio" == "dalmatian" && "$ubuntu_major_version" != "24" ]]; then
+    echo "Erro: O repositório $repositorio só é compatível com Ubuntu 24."
+    exit 1
+
+elif [[ "$repositorio" != "dalmatian" && "$ubuntu_major_version" != "22" ]]; then
+    echo "Erro: Repositório $repositorio só é compatível com Ubuntu 22."
+    exit 1
+fi
+
+echo "Repositório '$repositorio' e Ubuntu $ubuntu_major_version são compatíveis."
+
 # Verifica se o usuário está configurado para usar o sudo sem digitar senha
 if sudo grep -q "^$USUARIO ALL=(ALL) NOPASSWD: ALL" /etc/sudoers; then
     echo "O usuário $USUARIO já tem sudo sem senha."
@@ -794,7 +812,7 @@ echo "Reiniciando o serviço Memcached..."
 sudo service memcached restart
 
 
-ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
+#ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
 
 if [ "$ubuntu_full_version" = "24.04" ]; then
 # Instalar o etcd
