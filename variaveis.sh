@@ -6,7 +6,7 @@
 USUARIO="ubuntu"
 
 # qual repsitório do openstack vai utilizar?
-# "zed", "antelope", "bobcat", "caracal","Dalmatian"
+# "zed", "antelope", "bobcat", "caracal","dalmatian"
 # com o repositorio caracal não vai funcionar o vpnaas neste script
 
 repositorio="bobcat"
