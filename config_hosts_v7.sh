@@ -1185,11 +1185,11 @@ sudo service apache2 restart
 ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
 
 if [ "$ubuntu_full_version" = "24.04" ]; then
+echo "versão do ubuntu não precisa do python3-osc-placement...instalação abortada"
+else
 # Instalando python3-osc-placement
 echo "Instalando python3-osc-placement..."
 sudo apt install python3-osc-placement -y &>/dev/null
-else
-echo "versão do ubuntu não precisa do python3-osc-placement...instalação abortada"
 fi
 
 # Verificar a atualização do Placement
