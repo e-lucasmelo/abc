@@ -843,7 +843,7 @@ ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
 if [ "$ubuntu_full_version" = "24.04" ]; then
   # Habilitar e reiniciar o serviço etcd
 echo "Habilitando o serviço etcd-server..."
-sudo systemctl enable etcd=server &>/dev/null
+sudo systemctl enable etcd &>/dev/null
 echo "Reiniciando o serviço etcd-server..."
 sudo systemctl restart etcd*
 else
