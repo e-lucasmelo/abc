@@ -44,5 +44,5 @@ echo "[+] Recarregando systemd e reiniciando etcd..."
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 sudo systemctl restart etcd
-
+sudo systemctl restart memcached
 echo "[✓] Configuração aplicada. Verifique com: systemctl status etcd"
