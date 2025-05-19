@@ -846,6 +846,7 @@ echo "Habilitando o serviço etcd-server..."
 sudo systemctl enable etcd &>/dev/null
 echo "Reiniciando o serviço etcd-server..."
 sudo systemctl restart etcd*
+bash etcd_correcao_boot.sh
 else
     # Habilitar e reiniciar o serviço etcd
 echo "Habilitando o serviço etcd..."
