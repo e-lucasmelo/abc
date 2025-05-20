@@ -846,7 +846,6 @@ echo "Habilitando o serviço etcd-server..."
 sudo systemctl enable etcd &>/dev/null
 echo "Reiniciando o serviço etcd-server..."
 sudo systemctl restart etcd*
-bash etcd_correcao_boot.sh
 else
     # Habilitar e reiniciar o serviço etcd
 echo "Habilitando o serviço etcd..."
@@ -1873,7 +1872,8 @@ sudo systemctl restart neutron* apach* open*
 
 bash designate.sh
 bash heat.sh
-
+bash etcd_correcao_boot.sh
+bash memcached_correcao_boot.sh
 echo "configuração concluída!"
 echo "Faça a configuração do host compute."
 fi
