@@ -845,13 +845,13 @@ if [ "$ubuntu_full_version" = "24.04" ]; then
 echo "Habilitando o serviço etcd-server..."
 sudo systemctl enable etcd &>/dev/null
 echo "Reiniciando o serviço etcd-server..."
-sudo systemctl restart etcd*
+sudo systemctl restart etcd.service
 else
     # Habilitar e reiniciar o serviço etcd
 echo "Habilitando o serviço etcd..."
 sudo systemctl enable etcd &>/dev/null
 echo "Reiniciando o serviço etcd..."
-sudo systemctl restart etcd
+sudo systemctl restart etcd.service
 fi
 
 
