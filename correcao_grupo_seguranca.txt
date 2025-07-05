@@ -1,0 +1,6 @@
+sudo nano /usr/share/openstack-dashboard/openstack_dashboard/api/neutron.py
+
+alterar:
+sg_ids += p.security_groups
+por:
+sg_ids += p.security_group_ids
