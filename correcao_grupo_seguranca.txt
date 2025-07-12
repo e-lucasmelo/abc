@@ -4,3 +4,12 @@ alterar:
 sg_ids += p.security_groups
 por:
 sg_ids += p.security_group_ids
+
+
+
+sudo nano /usr/share/openstack-dashboard/openstack_dashboard/dashboards/project/networks/ports/workflows.py
+
+alterar a linha:
+return port.security_groups
+para:
+return port.security_group_ids
