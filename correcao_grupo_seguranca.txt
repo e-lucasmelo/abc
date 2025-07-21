@@ -13,3 +13,15 @@ alterar a linha:
 return port.security_groups
 para:
 return port.security_group_ids
+
+
+sudo nano /usr/share/openstack-dashboard/openstack_dashboard/dashboards/project/networks/subnets/views.py
+
+alterar:
+for key in ('cidr', 'ip_version', 'is_dhcp_enabled'):
+    initial[key] = subnet[key]
+
+para:
+initial['enable_dhcp'] = subnet['is_dhcp_enabled']
+for key in ('cidr', 'ip_version'):
+    initial[key] = subnet[key]
