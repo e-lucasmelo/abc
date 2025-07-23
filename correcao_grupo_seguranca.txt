@@ -25,3 +25,12 @@ para:
 initial['enable_dhcp'] = subnet['is_dhcp_enabled']
 for key in ('cidr', 'ip_version'):
     initial[key] = subnet[key]
+
+
+sudo nano /usr/lib/python3/dist-packages/openstack_dashboard/dashboards/project/networks/templates/networks/subnets/_detail_overview.html
+
+alterar:
+<dd>{{ subnet.enable_dhcp|yesno|capfirst }}</dd>
+
+para:
+<dd>{{ subnet.is_dhcp_enabled|yesno|capfirst }}</dd>
