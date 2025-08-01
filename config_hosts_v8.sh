@@ -1328,7 +1328,7 @@ password = $senha
 [cinder]
 os_region_name = RegionOne
 
-catalog_info = volume:cinder:publicURL
+catalog_info = volumev3:cinderv3:publicURL
 os_region_name = RegionOne
 auth_type = password
 auth_url = http://${controller[0]}:5000/v3
