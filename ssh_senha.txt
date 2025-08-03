@@ -1,5 +1,24 @@
 formas de acesso ao servidor
 
+quando está no próprio servidor:
+
+criar as chaves privadas e publicas:
+
+ssh-keygen -t ed25519 -C "colocar comentario"
+	
+	colocar o caminho e nome do arquivo
+	/home/ubuntu/.ssh/nome_arquivo
+	coloque senha
+	
+
+Ajustar as permissoes
+
+chmod 700 ~/.ssh
+chmod 700 /home/$USER
+chmod 600 ~/.ssh/authorized_keys
+
+sudo cat ~/.ssh/nome_arquivo.pub >> ~/.ssh/authorized_keys
+
 por senha
 
 no arquivo /etc/ssh/sshd_config ou /etc/ssh/sshd_config.d/50-cloud-init.conf, configurar as seguintes linhas:
@@ -17,3 +36,4 @@ AuthorizedKeysFile .ssh/authorized_keys
 
 se quiser apenas por chave, deve configurar a linha abaixo:
 PasswordAuthentication no
+
