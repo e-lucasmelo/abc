@@ -1,0 +1,19 @@
+formas de acesso ao servidor
+
+por senha
+
+no arquivo /etc/ssh/sshd_config ou /etc/ssh/sshd_config.d/50-cloud-init.conf, configurar as seguintes linhas:
+
+PasswordAuthentication yes
+UsePAM yes
+
+
+por chave
+
+no arquivo /etc/ssh/sshd_config ou /etc/ssh/sshd_config.d/50-cloud-init.conf, configurar as seguintes linhas:
+
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+se quiser apenas por chave, deve configurar a linha abaixo:
+PasswordAuthentication no
