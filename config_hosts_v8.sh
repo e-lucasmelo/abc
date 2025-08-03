@@ -824,12 +824,13 @@ sudo apt install -y erlang-base \
                         erlang-runtime-tools erlang-snmp erlang-ssl \
                         erlang-syntax-tools erlang-tftp erlang-tools erlang-xmerl
 
+echo "Instalando o RabbitMQ..."
 ## Install rabbitmq-server and its dependencies
 sudo apt install rabbitmq-server -y --fix-missing
 
 # Instalar o RabbitMQ
-echo "Instalando o RabbitMQ..."
-sudo apt install rabbitmq-server -y &>/dev/null
+#echo "Instalando o RabbitMQ..."
+#sudo apt install rabbitmq-server -y &>/dev/null
 
 # Configurar o RabbitMQ
 echo "Configurando o RabbitMQ..."
