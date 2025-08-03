@@ -1,0 +1,13 @@
+testar transmissao de dados da rede
+
+#instalar o iperf3 nos servidores que serão testados
+
+sudo apt update && sudo apt install iperf3
+
+#ative a escuta em um dos servidores
+
+iperf3 -s
+
+#no outro servidor, testar conexao entre servidores
+
+iperf3 -c IP_OUTRO_SERVIDOR -u -b 10000M
