@@ -4,6 +4,11 @@
 source variaveis.sh
 source admin-openrc
 
+echo "forçando instalação do python-zaqarclient==2.7.0..."
+sudo python3 -m pip install python-zaqarclient==2.7.0 --break-system-packages &>/dev/null
+echo "travando a versão instalada do python3-zaqarClient..."
+sudo apt-mark hold python3-zaqarclient &>/dev/null
+
 # Configuração do banco de dados MySQL
 echo "Configuração do banco de dados MySQL para o Heat..."
 sudo mysql <<EOF

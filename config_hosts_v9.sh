@@ -275,11 +275,6 @@ sudo chronyc sources
 echo "Adicionando o repositório do OpenStack $repositorio..."
 sudo add-apt-repository -y cloud-archive:$repositorio &>/dev/null
 
-echo "forçando instalação do python-zaqarclient==2.7.0..."
-sudo python3 -m pip install python-zaqarclient==2.7.0 --break-system-packages
-echo "travando a versão instalada do python3-zaqarClient..."
-sudo apt-mark hold python3-zaqarclient
-
 # Instalar os pacotes necessários
 echo "Instalando nova-compute e dependências..."
 sudo apt install nova-compute -y &>/dev/null
