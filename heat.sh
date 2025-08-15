@@ -104,8 +104,8 @@ openstack orchestration service list
 echo "instalando o heat no dashboard..."
 sudo apt install python3-heat-dashboard -y &>/dev/null
 
-sudo python3 -m pip install python-zaqarclient==2.7.0 --break-system-packages
-sudo apt-mark hold python3-zaqarclient
+sudo python3 -m pip install python-zaqarclient==2.7.0 --break-system-packages &>/dev/null
+sudo apt-mark hold python3-zaqarclient &>/dev/null
 
 # reiniciando o apache
 echo "reiniciando o apache2..."
