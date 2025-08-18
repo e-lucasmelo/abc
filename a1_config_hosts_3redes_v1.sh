@@ -3,6 +3,30 @@
 #carrega as variáveis
 source variaveis.sh
 
+# Verifica se a variável está definida e se é um valor válido
+if [[ -z "$repositorio" || ! " ${valid_releases[@]} " =~ " $repositorio " ]]; then
+    echo "Erro: variável 'repositorio' não definida ou contém um valor inválido."
+    echo "Valores válidos: ${valid_releases[*]}"
+    exit 1
+fi
+
+# Pega a versão completa, ex: "24.04"
+ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
+
+# Extrai apenas a parte antes do ponto, ex: "24"
+ubuntu_major_version=$(echo "$ubuntu_full_version" | cut -d '.' -f 1)
+
+if [[ ("$repositorio" == "dalmatian" || "$repositorio" == "epoxy") && "$ubuntu_major_version" != "24" ]]; then
+    echo "Erro: O repositório $repositorio só é compatível com Ubuntu 24."
+    exit 1
+
+elif [[ "$repositorio" != "dalmatian" && "$repositorio" != "epoxy" && "$ubuntu_major_version" != "22" ]]; then
+    echo "Erro: O repositório $repositorio só é compatível com Ubuntu 22."
+    exit 1
+fi
+
+echo "Repositório '$repositorio' e Ubuntu $ubuntu_major_version são compatíveis."
+
 # Verifica se o usuário está configurado para usar o sudo sem digitar senha
 if sudo grep -q "^$USUARIO ALL=(ALL) NOPASSWD: ALL" /etc/sudoers; then
     echo "O usuário $USUARIO já tem sudo sem senha."
@@ -24,11 +48,13 @@ ip_gerencia(){
 host_array=($(ip_gerencia))
 host_temp=$(echo "$host" | sed 's/[0-9]*$//')
 
-if [ $host_temp = "block" ]; then
+# no if é aconselhável colocar as variáveis entre aspas também
+#if [ "$host_temp" = "block" ] || [ "$computeBlock" = "sim" ]; then
 
-if [ -b /dev/$disk_block ]; then
+if [[ "$host_temp" = "block" || ( "$computeBlock" = "sim" && "$host_temp" = "compute" ) ]]; then
+if [ -b "/dev/$disk_block" ]; then
     echo "/dev/$disk_block existe, vamos seguir a configuração..."
-elif [ -n $disk_block ];then
+elif [ -n "$disk_block" ];then
     echo "a variável disk_block está vazia, não podemos seguir com a configuração."
     echo "preencha a variavel e inicie o script novamente."
     exit 1
@@ -40,7 +66,8 @@ else
 echo "host não é de block, vamos seguir a configuração..."
 fi
 
-if [ "$host_temp" = "object" ]; then
+#if [ "$host_temp" = "object" ] || [ "$computeObject" = "sim" ]; then
+if [[ "$host_temp" = "object" || ( "$computeObject" = "sim" && "$host_temp" = "compute" ) ]]; then
     if [ -z "$disk_object1" ]; then
         echo "a variável disk_object1 está vazia, preencha a variável e inicie o script novamente."
         exit 1
@@ -54,7 +81,7 @@ if [ "$host_temp" = "object" ]; then
         exit 1
     fi
 else
-     echo "host não é de object, vamos seguir a configuração..."
+    echo "host não é de object, vamos seguir a configuração..."
 fi
 
 # Atualizar e atualizar o sistema
@@ -66,10 +93,23 @@ sudo apt upgrade -y &>/dev/null
 echo "Definindo o hostname como '${host_array[0]}'..."
 sudo hostnamectl set-hostname ${host_array[0]}
 
-echo "desativando NetworkManager..."
-sudo systemctl disable --now NetworkManager
-echo "ativando systemd-networkd"
-sudo systemctl enable --now systemd-networkd
+#!/bin/bash
+
+# Verifica se o serviço NetworkManager existe
+if systemctl list-unit-files | grep -q '^NetworkManager.service'; then
+    # Verifica se o NetworkManager está ativo
+    if systemctl is-active --quiet NetworkManager; then
+        echo "Desativando NetworkManager..."
+        sudo systemctl disable --now NetworkManager
+        echo "Ativando systemd-networkd..."
+        sudo systemctl enable --now systemd-networkd
+    else
+        echo "NetworkManager não está ativo. Nenhuma ação necessária."
+    fi
+else
+    echo "NetworkManager não está instalado ou não gerenciado pelo systemd."
+fi
+
 
 # Editar o arquivo /etc/hosts
 echo "Adicionando entradas no /etc/hosts..."
@@ -87,67 +127,77 @@ ${object2[1]}	${object2[0]}
 ${object3[1]}	${object3[0]}
 EOF"
 
-if [ -n "$interfaceAdicional" ]; then
-i="        $interfaceAdicional:
+if [ $tipoConexao = "wifis" ]; then
+x="            access-points:
+                \"$rede_wifi\":
+                    password: \"$senha_wifi\""
+else
+x=""
+fi
+
+if [ -n "$interfaceInternet" ]; then
+i="network:
+    version: 2
+    renderer: networkd
+    $tipoConexao:
+        $interfaceInternet:
             addresses:
             - ${host_array[2]}
+            nameservers:
+                addresses:
+                - $gateway_internet
+                - ${dns[0]}
+                - ${dns[1]}
+            routes:
+            -   to: default
+                via: $gateway_internet
+                metric: 100
+            -   to: ${dns[0]}
+                via: $gateway_internet
+                metric: 100
+            -   to: ${dns[1]}
+                via: $gateway_internet
+                metric: 100
+$x
+            dhcp4: false
             dhcp6: false
-            accept-ra: no
-"
+            accept-ra: no"
 else
 i=""
 fi
 
-if [ $rede_ger = "wifis" ]; then
-x="            access-points:
-                \"$rede_wifi\":
-                    password: \"$senha_wifi\"
+if [ "$host_temp" = "controller" ] || [ "$host_temp" = "compute" ]; then
+p="
+    ethernets:
+        $interfaceProvider:
+            dhcp4: false
             dhcp6: false
             accept-ra: no
-    ethernets:
 "
 else
-x="            dhcp6: false
-            accept-ra: no
-"
+p=""
+fi
+
+if [ -n "$interface_ger" ]; then
+g="        $interface_ger:
+            addresses:
+            - ${host_array[1]}/24
+            routes:
+            -   to: $ip_ger.0/24
+                via: $ip_ger.1
+                metric: 100
+            optional: true
+            link-local: []
+            dhcp4: false"
 fi
 
 # Editar o arquivo de configuração de rede /etc/netplan/50-cloud-init.yaml
 echo "Configurando rede no $arquivoNetplan..."
 sudo bash -c "cat <<EOF > $arquivoNetplan
-network:
-    renderer: networkd
-    $rede_ger:
-        $interface_ger:
-            addresses:
-            - ${host_array[1]}/24
-            nameservers:
-                addresses:
-                - ${dns[0]}
-                - ${dns[1]}
-                search: []
-            routes:
-            -   to: default
-                via: $gateway_gerencia
-                metric: 100
-            -   to: ${dns[0]}
-                via: $gateway_gerencia
-                metric: 100
-            -   to: ${dns[1]}
-                via: $gateway_gerencia
-                metric: 100
-$x
-        $interfaceProvider:
-            dhcp4: false
-            dhcp6: false
-            accept-ra: no
 $i
-    version: 2
+$g
+$p
 EOF"
-
-# Configurar o fuso horário para America/Sao_Paulo
-echo "Configurando o fuso horário para America/Sao_Paulo..."
-sudo timedatectl set-timezone America/Sao_Paulo
 
 # Desabilitar configuração de rede no /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
 echo "Desabilitando a configuração de rede no /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg..."
@@ -217,8 +267,8 @@ echo "Verificando fontes do Chrony..."
 sudo chronyc sources
 
 # Adicionar o repositório do OpenStack Caracal
-echo "Adicionando o repositório do OpenStack Caracal..."
-sudo add-apt-repository -y cloud-archive:caracal &>/dev/null
+echo "Adicionando o repositório do OpenStack $repositorio..."
+sudo add-apt-repository -y cloud-archive:$repositorio &>/dev/null
 
 # Instalar os pacotes necessários
 echo "Instalando nova-compute e dependências..."
@@ -226,10 +276,14 @@ sudo apt install nova-compute -y &>/dev/null
 echo "Instalando python3-openstackclient..."
 sudo apt install python3-openstackclient -y &>/dev/null
 
-if [ $host_temp = "block" ]; then
+if [ $host_temp = "block" ] || [ $host_temp = "object" ]; then
 echo "desabilitando apenas o serviço do nova-compute para o host ${host_array[0]}..."
 sudo systemctl disable --now nova-compute
+fi
 
+#if [ $host_temp = "block" ] || [ $computeBlock = "sim" ]; then
+
+if [[ "$host_temp" = "block" || ( "$computeBlock" = "sim" && "$host_temp" = "compute" ) ]]; then
 echo "instalação do LVM"
 # Configurar LVM
 sudo apt install lvm2 thin-provisioning-tools -y &>/dev/null
@@ -368,6 +422,8 @@ volumes_dir = /var/lib/cinder/volumes
 connection = mysql+pymysql://cinder:$senha@${controller[0]}/cinder
 
 [keystone_authtoken]
+service_token_roles = service
+service_token_roles_required = true
 www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
@@ -386,6 +442,17 @@ target_helper = tgtadm
 
 [oslo_concurrency]
 lock_path = /var/lib/cinder/tmp
+
+[service_user]
+send_service_user_token = true
+auth_strategy = keystone
+auth_url = http://${controller[0]}:5000
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = nova
+password = $senha
 EOF"
 
 # Configurar tgt
@@ -404,8 +471,8 @@ echo "faça a configuração de update do host controller"
 
 fi
 
-if [ $host_temp = "object" ]; then
-
+#if [ "$host_temp" = "object" ] || [ "$computeObject" = "sim" ]; then
+if [[ "$host_temp" = "object" || ( "$computeObject" = "sim" && "$host_temp" = "compute" ) ]]; then
 echo "Instalando xfsprogs e rsync..."
 sudo apt install xfsprogs rsync -y &>/dev/null
 
@@ -594,12 +661,14 @@ transport_url = rabbit://openstack:$senha@${controller[0]}:5672/
 auth_strategy = keystone
 
 [keystone_authtoken]
+service_token_roles = service
+service_token_roles_required = true
 www_authenticate_uri = http://${controller[0]}:5000/
 auth_url = http://${controller[0]}:5000/
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = Default
-user_domain_name = Default
+project_domain_name = default
+user_domain_name = default
 project_name = service
 username = nova
 password = $senha
@@ -607,12 +676,13 @@ password = $senha
 [service_user]
 send_service_user_token = true
 #auth_url = https://${controller[0]}/identity
-auth_url = http://${controller[0]}:5000/
+#auth_url = http://${controller[0]}:5000/
+auth_url = http://${controller[0]}:5000
 auth_strategy = keystone
 auth_type = password
-project_domain_name = Default
+project_domain_name = default
 project_name = service
-user_domain_name = Default
+user_domain_name = default
 username = nova
 password = $senha
 
@@ -630,19 +700,20 @@ lock_path = /var/lib/nova/tmp
 
 [placement]
 region_name = RegionOne
-project_domain_name = Default
+project_domain_name = default
 project_name = service
 auth_type = password
-user_domain_name = Default
-auth_url = http://${controller[0]}:5000/v3
+user_domain_name = default
+#auth_url = http://${controller[0]}:5000/v3
+auth_url = http://${controller[0]}:5000
 username = placement
 password = $senha
 
 [neutron]
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = Default
-user_domain_name = Default
+project_domain_name = default
+user_domain_name = default
 region_name = RegionOne
 project_name = service
 username = neutron
@@ -720,7 +791,8 @@ sudo apt install mariadb-server python3-pymysql -y &>/dev/null
 echo "Configurando o MariaDB..."
 sudo bash -c "cat <<EOF > /etc/mysql/mariadb.conf.d/99-openstack.cnf
 [mysqld]
-bind-address = ${controller[1]}
+#bind-address = ${controller[1]}
+bind-address = 0.0.0.0
 default-storage-engine = innodb
 innodb_file_per_table = on
 max_connections = 4096
@@ -762,30 +834,50 @@ EOF"
 echo "Reiniciando o serviço Memcached..."
 sudo service memcached restart
 
+
+#ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
+
+if [ "$ubuntu_full_version" = "24.04" ]; then
+# Instalar o etcd
+echo "Instalando o etcd-server..."
+sudo apt install etcd-server -y &>/dev/null
+else
 # Instalar o etcd
 echo "Instalando o etcd..."
 sudo apt install etcd -y &>/dev/null
+fi
 
 # Configurar o etcd
 echo "Configurando o etcd..."
 sudo bash -c "cat <<EOF > /etc/default/etcd
 ETCD_NAME="${controller[0]}"
-ETCD_DATA_DIR="/var/lib/etcd"
-ETCD_INITIAL_CLUSTER_STATE="new"
-ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster-01"
-ETCD_INITIAL_CLUSTER="${controller[0]}=http://${controller[1]}:2380"
-ETCD_INITIAL_ADVERTISE_PEER_URLS="http://${controller[1]}:2380"
-ETCD_ADVERTISE_CLIENT_URLS="http://${controller[1]}:2379"
-ETCD_LISTEN_PEER_URLS="http://0.0.0.0:2380"
-ETCD_LISTEN_CLIENT_URLS="http://${controller[1]}:2379"
+ETCD_DATA_DIR=\"/var/lib/etcd\"
+ETCD_INITIAL_CLUSTER_STATE=\"new\"
+ETCD_INITIAL_CLUSTER_TOKEN=\"etcd-cluster-01\"
+ETCD_INITIAL_CLUSTER=\"${controller[0]}=http://${controller[1]}:2380\"
+ETCD_INITIAL_ADVERTISE_PEER_URLS=\"http://${controller[1]}:2380\"
+ETCD_ADVERTISE_CLIENT_URLS=\"http://${controller[1]}:2379\"
+ETCD_LISTEN_PEER_URLS=\"http://0.0.0.0:2380\"
+ETCD_LISTEN_CLIENT_URLS=\"http://${controller[1]}:2379\"
 EOF"
 
+ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
 
-# Habilitar e reiniciar o serviço etcd
+if [ "$ubuntu_full_version" = "24.04" ]; then
+  # Habilitar e reiniciar o serviço etcd
+echo "Habilitando o serviço etcd-server..."
+sudo systemctl enable etcd &>/dev/null
+echo "Reiniciando o serviço etcd-server..."
+sudo systemctl restart etcd.service
+else
+    # Habilitar e reiniciar o serviço etcd
 echo "Habilitando o serviço etcd..."
 sudo systemctl enable etcd &>/dev/null
 echo "Reiniciando o serviço etcd..."
-sudo systemctl restart etcd
+sudo systemctl restart etcd.service
+fi
+
+
 
 # Configuração do banco de dados MySQL
 echo "Configuração do banco de dados MySQL para o Keystone..."
@@ -808,6 +900,7 @@ log_dir = /var/log/keystone
 connection = mysql+pymysql://keystone:$senha@${controller[0]}/keystone
 [token]
 provider = fernet
+
 EOF"
 
 # Sincronizar o banco de dados do Keystone
@@ -830,22 +923,6 @@ sudo keystone-manage bootstrap --bootstrap-password $senha \
   --bootstrap-internal-url http://${controller[0]}:5000/v3/ \
   --bootstrap-public-url http://${controller[0]}:5000/v3/ \
   --bootstrap-region-id RegionOne
-
-
-# echo "criando região..."
-# openstack region create RegionOne
-# echo "criando usuário admin no dominio default..."
-# openstack user create --domain default --password $senha admin
-# echo "adicionando o usuário admin para o projeto admin..."
-# openstack role add --project admin --user admin admin
-# echo "criando o serviço para o Keystone..."
-# openstack service create --name keystone --description "OpenStack Identity" identity
-# echo "criando endpoint admin..."
-# openstack endpoint create --region RegionOne identity admin http://${controller[0]}:5000/v3/
-# echo "criando endpoint internal..."
-# openstack endpoint create --region RegionOne identity internal http://${controller[0]}:5000/v3/
-# echo "criando endpoint public..."
-# openstack endpoint create --region RegionOne identity public http://${controller[0]}:5000/v3/
 
 
 # Configuração do Apache para o Keystone
@@ -904,8 +981,8 @@ echo "Configurando variáveis de ambiente..."
 export OS_USERNAME=admin
 export OS_PASSWORD=$senha
 export OS_PROJECT_NAME=admin
-export OS_USER_DOMAIN_NAME=Default
-export OS_PROJECT_DOMAIN_NAME=Default
+export OS_USER_DOMAIN_NAME=default
+export OS_PROJECT_DOMAIN_NAME=default
 export OS_AUTH_URL=http://${controller[0]}:5000/v3
 export OS_IDENTITY_API_VERSION=3
 
@@ -929,16 +1006,16 @@ openstack role create user
 
 # Obter o token de administrador
 echo "testando obtenção de token de administrador..."
-openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name admin --os-username admin token issue
+openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name default --os-user-domain-name default --os-project-name admin --os-username admin token issue
 
 # Obter o token do usuário demo
 # echo "testando obtenção de token do usuário myrole..."
-# openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name myproject --os-username myuser token issue
+# openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name default --os-user-domain-name default --os-project-name myproject --os-username myuser token issue
 
 # Criar arquivos admin-openrc e demo-openrc
 echo "Criando arquivos admin-openrc..."
-echo "export OS_PROJECT_DOMAIN_NAME=Default
-export OS_USER_DOMAIN_NAME=Default
+echo "export OS_PROJECT_DOMAIN_NAME=default
+export OS_USER_DOMAIN_NAME=default
 export OS_PROJECT_NAME=admin
 export OS_USERNAME=admin
 export OS_PASSWORD=$senha
@@ -947,8 +1024,8 @@ export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2" | sudo tee admin-openrc &>/dev/null
 
 # echo "Criando arquivo demo-openrc..."
-# echo "export OS_PROJECT_DOMAIN_NAME=Default
-# export OS_USER_DOMAIN_NAME=Default
+# echo "export OS_PROJECT_DOMAIN_NAME=default
+# export OS_USER_DOMAIN_NAME=default
 # export OS_PROJECT_NAME=myproject
 # export OS_USERNAME=myuser
 # export OS_PASSWORD=$senha
@@ -1005,12 +1082,14 @@ enabled_backends=fs:file
 [database]
 connection = mysql+pymysql://glance:$senha@${controller[0]}/glance
 [keystone_authtoken]
+service_token_roles = service
+service_token_roles_required = true
 www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = Default
-user_domain_name = Default
+project_domain_name = default
+user_domain_name = default
 project_name = service
 username = glance
 password = $senha
@@ -1031,7 +1110,17 @@ password = $senha
 endpoint_id = 
 region_name = RegionOne
 [cinder]
-#store_description = "Cinder backend"
+#store_description = \"Cinder backend\"
+[service_user]
+send_service_user_token = true
+auth_strategy = keystone
+auth_url = http://${controller[0]}:5000
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = nova
+password = $senha
 EOF"
 
 # Obter o ID do endpoint público de imagem
@@ -1044,7 +1133,7 @@ sudo sed -i "s|endpoint_id = |endpoint_id = $public_image_endpoint_id|g" /etc/gl
 
 # Adicionar a role "reader" ao usuário Glance
 echo "Adicionando a role 'reader' ao usuário Glance..."
-openstack role add --user glance --user-domain Default --system all reader
+openstack role add --user glance --user-domain default --system all reader
 
 # Sincronizar o banco de dados do Glance
 echo "Sincronizando o banco de dados do Glance..."
@@ -1109,13 +1198,26 @@ connection = mysql+pymysql://placement:$senha@${controller[0]}/placement
 [api]
 auth_strategy = keystone
 [keystone_authtoken]
-auth_url = http://${controller[0]}:5000/v3
+service_token_roles = service
+service_token_roles_required = true
+#auth_url = http://${controller[0]}:5000/v3
+auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = Default
-user_domain_name = Default
+project_domain_name = default
+user_domain_name = default
 project_name = service
 username = placement
+password = $senha
+[service_user]
+send_service_user_token = true
+auth_strategy = keystone
+auth_url = http://${controller[0]}:5000
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = nova
 password = $senha
 EOF"
 
@@ -1126,6 +1228,17 @@ sudo -u placement /bin/sh -c "placement-manage db sync" &>/dev/null
 # Reiniciar o serviço Apache para o Placement
 echo "Reiniciando o serviço Apache..."
 sudo service apache2 restart
+
+
+ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
+
+if [ "$ubuntu_full_version" = "24.04" ]; then
+echo "versão do ubuntu não precisa do python3-osc-placement...instalação abortada"
+else
+# Instalando python3-osc-placement
+echo "Instalando python3-osc-placement..."
+sudo apt install python3-osc-placement -y &>/dev/null
+fi
 
 # Verificar a atualização do Placement
 echo "Verificando o status do Placement..."
@@ -1192,20 +1305,22 @@ connection = mysql+pymysql://nova:$senha@${controller[0]}/nova
 [api]
 auth_strategy = keystone
 [keystone_authtoken]
+service_token_roles = service
+service_token_roles_required = true
 www_authenticate_uri = http://${controller[0]}:5000/
 auth_url = http://${controller[0]}:5000/
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = Default
-user_domain_name = Default
+project_domain_name = default
+user_domain_name = default
 project_name = service
 username = nova
 password = $senha
 [neutron]
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = Default
-user_domain_name = Default
+project_domain_name = default
+user_domain_name = default
 region_name = RegionOne
 project_name = service
 username = neutron
@@ -1217,12 +1332,13 @@ send_service_user_token = true
 #linha comentada para o compute no controller
 #auth_url = http://${controller[0]}:5000/identity
 #nova_linha para o compute no controller
-auth_url = http://${controller[0]}:5000/
+#auth_url = http://${controller[0]}:5000/
+auth_url = http://${controller[0]}:5000
 auth_strategy = keystone
 auth_type = password
-project_domain_name = Default
+project_domain_name = default
 project_name = service
-user_domain_name = Default
+user_domain_name = default
 username = nova
 password = $senha
 [vnc]
@@ -1237,11 +1353,12 @@ api_servers = http://${controller[0]}:9292
 lock_path = /var/lib/nova/tmp
 [placement]
 region_name = RegionOne
-project_domain_name = Default
+project_domain_name = default
 project_name = service
 auth_type = password
-user_domain_name = Default
-auth_url = http://${controller[0]}:5000/v3
+user_domain_name = default
+#auth_url = http://${controller[0]}:5000/v3
+auth_url = http://${controller[0]}:5000
 username = placement
 password = $senha
 [cinder]
@@ -1328,7 +1445,7 @@ echo "Configurando o arquivo /etc/neutron/neutron.conf..."
 sudo bash -c "cat <<EOF > /etc/neutron/neutron.conf
 [DEFAULT]
 core_plugin = ml2
-service_plugins = router
+service_plugins = router,vpnaas
 transport_url = rabbit://openstack:$senha@${controller[0]}
 auth_strategy = keystone
 notify_nova_on_port_status_changes = true
@@ -1341,12 +1458,14 @@ root_helper = \"sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf\"
 connection = mysql+pymysql://neutron:$senha@${controller[0]}/neutron
 
 [keystone_authtoken]
+service_token_roles = service
+service_token_roles_required = true
 www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = Default
-user_domain_name = Default
+project_domain_name = default
+user_domain_name = default
 project_name = service
 username = neutron
 password = $senha
@@ -1354,8 +1473,8 @@ password = $senha
 [nova]
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = Default
-user_domain_name = Default
+project_domain_name = default
+user_domain_name = default
 region_name = RegionOne
 project_name = service
 username = nova
@@ -1363,6 +1482,17 @@ password = $senha
 
 [oslo_concurrency]
 lock_path = /var/lib/neutron/tmp
+
+[service_user]
+send_service_user_token = true
+auth_strategy = keystone
+auth_url = http://${controller[0]}:5000
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = nova
+password = $senha
 EOF"
 
 
@@ -1399,6 +1529,10 @@ echo "Configurando o arquivo /etc/neutron/l3_agent.ini..."
 sudo bash -c 'cat <<EOF > /etc/neutron/l3_agent.ini
 [DEFAULT]
 interface_driver = openvswitch
+[AGENT]
+extensions = vpnaas
+[vpnagent]
+vpn_device_driver = neutron_vpnaas.services.vpn.device_drivers.strongswan_ipsec.StrongSwanDriver
 EOF'
 
 echo "Configurando o arquivo /etc/neutron/dhcp_agent.ini..."
@@ -1418,6 +1552,24 @@ EOF"
 
 sudo ovs-vsctl add-br br-provider
 sudo ovs-vsctl add-port br-provider $interfaceProvider
+
+echo "instalando pacotes para a VPN..."
+sudo apt install python3-neutron-vpnaas neutron-vpnaas-common python3-neutron-vpnaas-dashboard python3-pip gettext -y &>/dev/null
+
+sudo bash -c "cat <<EOF > /etc/neutron/neutron_vpnaas.conf
+[service_providers]
+service_provider = VPN:strongswan:neutron_vpnaas.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+EOF"
+
+sudo bash -c "cat <<EOF > /etc/neutron/vpn_agent.ini
+[DEFAULT]
+interface_driver = openvswitch
+vpn_device_driver = neutron_vpnaas.services.vpn.device_drivers.ipsec.IPsecDriver
+state_path = /var/lib/neutron
+debug = True
+log_file = /var/log/neutron/vpn-agent.log
+periodic_interval = 10
+EOF"
 
 echo "Sincronizando o banco de dados Neutron e arquivos de conf..."
 # sudo neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head &>/dev/null
@@ -1466,7 +1618,7 @@ OPENSTACK_API_VERSIONS = {
     \"image\": 2,
     \"volume\": 3,
 }
-OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = \"Default\"
+OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = \"default\"
 OPENSTACK_KEYSTONE_DEFAULT_ROLE = \"user\"
 OPENSTACK_NEUTRON_NETWORK = {
     \"enable_router\": True,
@@ -1609,6 +1761,8 @@ my_ip = ${controller[1]}
 connection = mysql+pymysql://cinder:$senha@${controller[0]}/cinder
 
 [keystone_authtoken]
+service_token_roles = service
+service_token_roles_required = true
 www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
@@ -1621,6 +1775,16 @@ password = admin
 
 [oslo_concurrency]
 lock_path = /var/lib/cinder/tmp
+[service_user]
+send_service_user_token = true
+auth_strategy = keystone
+auth_url = http://${controller[0]}:5000
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = nova
+password = $senha
 EOF"
 
 echo "sincronizando banco de dados Cinder"
@@ -1639,10 +1803,10 @@ echo "configuração do Cinder finalizada"
 ##fazer a parte do block e quando terminar voltar aqui
 
 echo "Carregando variáveis de ambiente do OpenStack..."
-. admin-openrc
+source admin-openrc
 
 echo "verificando os hosts compute..."
-sudo -u nova /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose"
+sudo -u nova /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" &>/dev/null
 
 echo "verificar a lista de serviços, catálogo e imagem"
 openstack compute service list
@@ -1699,8 +1863,8 @@ www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_id = default
-user_domain_id = default
+project_domain = default
+user_domain = default
 project_name = service
 username = swift
 password = $senha
@@ -1780,6 +1944,14 @@ use = egg:swift#listing_formats
 [filter:symlink]
 use = egg:swift#symlink
 EOF"
+
+#sudo -u neutron /bin/sh -c "neutron-db-manage --subproject neutron-vpnaas upgrade head"
+sudo systemctl restart neutron* apach* open*
+
+bash designate.sh
+bash heat.sh
+bash etcd_correcao_boot.sh
+bash memcached_correcao_boot.sh
 echo "configuração concluída!"
 echo "Faça a configuração do host compute."
 fi
