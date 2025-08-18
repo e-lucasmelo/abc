@@ -422,8 +422,8 @@ volumes_dir = /var/lib/cinder/volumes
 connection = mysql+pymysql://cinder:$senha@${controller[0]}/cinder
 
 [keystone_authtoken]
-service_token_roles = service
-service_token_roles_required = true
+#service_token_roles = service
+#service_token_roles_required = true
 www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
