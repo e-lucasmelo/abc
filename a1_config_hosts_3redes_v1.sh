@@ -428,8 +428,8 @@ www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = cinder
 password = $senha
@@ -448,8 +448,8 @@ send_service_user_token = true
 auth_strategy = keystone
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = nova
 password = $senha
@@ -667,8 +667,8 @@ www_authenticate_uri = http://${controller[0]}:5000/
 auth_url = http://${controller[0]}:5000/
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = nova
 password = $senha
@@ -680,9 +680,9 @@ send_service_user_token = true
 auth_url = http://${controller[0]}:5000
 auth_strategy = keystone
 auth_type = password
-project_domain_name = default
+project_domain_name = Default
 project_name = service
-user_domain_name = default
+user_domain_name = Default
 username = nova
 password = $senha
 
@@ -700,10 +700,10 @@ lock_path = /var/lib/nova/tmp
 
 [placement]
 region_name = RegionOne
-project_domain_name = default
+project_domain_name = Default
 project_name = service
 auth_type = password
-user_domain_name = default
+user_domain_name = Default
 #auth_url = http://${controller[0]}:5000/v3
 auth_url = http://${controller[0]}:5000
 username = placement
@@ -712,8 +712,8 @@ password = $senha
 [neutron]
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 region_name = RegionOne
 project_name = service
 username = neutron
@@ -981,20 +981,20 @@ echo "Configurando variáveis de ambiente..."
 export OS_USERNAME=admin
 export OS_PASSWORD=$senha
 export OS_PROJECT_NAME=admin
-export OS_USER_DOMAIN_NAME=default
-export OS_PROJECT_DOMAIN_NAME=default
+export OS_USER_DOMAIN_NAME=Default
+export OS_PROJECT_DOMAIN_NAME=Default
 export OS_AUTH_URL=http://${controller[0]}:5000/v3
 export OS_IDENTITY_API_VERSION=3
 
 # Criar projetos e usuários no OpenStack
 echo "configurando projeto dos serviços..."
-openstack project create --domain default --description "Service Project" service
+openstack project create --domain Default --description "Service Project" service
 echo "configurando o papel de 'usuário...'"
 openstack role create user
 # echo "configurando projeto de demo..."
-# openstack project create --domain default --description "Demo Project" myproject
+# openstack project create --domain Default --description "Demo Project" myproject
 # echo "configurando usuário myuser ..."
-# openstack user create --domain default --password "$senha" myuser
+# openstack user create --domain Default --password "$senha" myuser
 # echo "configurando a função de usuário myrole..."
 # openstack role create myrole
 # echo "configurando usuário myuser na função myrole..."
@@ -1006,16 +1006,16 @@ openstack role create user
 
 # Obter o token de administrador
 echo "testando obtenção de token de administrador..."
-openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name default --os-user-domain-name default --os-project-name admin --os-username admin token issue
+openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name admin --os-username admin token issue
 
 # Obter o token do usuário demo
 # echo "testando obtenção de token do usuário myrole..."
-# openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name default --os-user-domain-name default --os-project-name myproject --os-username myuser token issue
+# openstack --os-auth-url http://${controller[0]}:5000/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name myproject --os-username myuser token issue
 
 # Criar arquivos admin-openrc e demo-openrc
 echo "Criando arquivos admin-openrc..."
-echo "export OS_PROJECT_DOMAIN_NAME=default
-export OS_USER_DOMAIN_NAME=default
+echo "export OS_PROJECT_DOMAIN_NAME=Default
+export OS_USER_DOMAIN_NAME=Default
 export OS_PROJECT_NAME=admin
 export OS_USERNAME=admin
 export OS_PASSWORD=$senha
@@ -1024,8 +1024,8 @@ export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2" | sudo tee admin-openrc &>/dev/null
 
 # echo "Criando arquivo demo-openrc..."
-# echo "export OS_PROJECT_DOMAIN_NAME=default
-# export OS_USER_DOMAIN_NAME=default
+# echo "export OS_PROJECT_DOMAIN_NAME=Default
+# export OS_USER_DOMAIN_NAME=Default
 # export OS_PROJECT_NAME=myproject
 # export OS_USERNAME=myuser
 # export OS_PASSWORD=$senha
@@ -1053,7 +1053,7 @@ echo "Carregando variáveis de ambiente do OpenStack..."
 
 # Criar o usuário Glance e atribuir permissões
 echo "Configurando usuário Glance ..."
-openstack user create --domain default --password "$senha" glance
+openstack user create --domain Default --password "$senha" glance
 echo "configurando usuário Glance no projeto de serviço..."
 openstack role add --project service --user glance admin
 
@@ -1088,8 +1088,8 @@ www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = glance
 password = $senha
@@ -1103,7 +1103,7 @@ filesystem_store_datadir = /var/lib/glance/images/
 [oslo_limit]
 auth_url = http://${controller[0]}:5000
 auth_type = password
-user_domain_id = default
+user_domain_id = Default
 username = glance
 system_scope = all
 password = $senha
@@ -1116,8 +1116,8 @@ send_service_user_token = true
 auth_strategy = keystone
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = nova
 password = $senha
@@ -1133,7 +1133,7 @@ sudo sed -i "s|endpoint_id = |endpoint_id = $public_image_endpoint_id|g" /etc/gl
 
 # Adicionar a role "reader" ao usuário Glance
 echo "Adicionando a role 'reader' ao usuário Glance..."
-openstack role add --user glance --user-domain default --system all reader
+openstack role add --user glance --user-domain Default --system all reader
 
 # Sincronizar o banco de dados do Glance
 echo "Sincronizando o banco de dados do Glance..."
@@ -1173,7 +1173,7 @@ echo "Carregando variáveis de ambiente do OpenStack..."
 
 # Criar o usuário Placement e atribuir permissões
 echo "Criando usuário Placement e atribuindo permissões..."
-openstack user create --domain default --password "$senha" placement
+openstack user create --domain Default --password "$senha" placement
 openstack role add --project service --user placement admin
 
 # Criar o serviço Placement
@@ -1204,8 +1204,8 @@ service_token_roles_required = true
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = placement
 password = $senha
@@ -1214,8 +1214,8 @@ send_service_user_token = true
 auth_strategy = keystone
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = nova
 password = $senha
@@ -1272,7 +1272,7 @@ echo "Carregando variáveis de ambiente do OpenStack..."
 
 # Criar o usuário Nova e atribuir permissões
 echo "Criando usuário Nova e atribuindo permissões..."
-openstack user create --domain default --password "$senha" nova
+openstack user create --domain Default --password "$senha" nova
 openstack role add --project service --user nova admin
 
 # Criar o serviço Nova
@@ -1311,16 +1311,16 @@ www_authenticate_uri = http://${controller[0]}:5000/
 auth_url = http://${controller[0]}:5000/
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = nova
 password = $senha
 [neutron]
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 region_name = RegionOne
 project_name = service
 username = neutron
@@ -1336,9 +1336,9 @@ send_service_user_token = true
 auth_url = http://${controller[0]}:5000
 auth_strategy = keystone
 auth_type = password
-project_domain_name = default
+project_domain_name = Default
 project_name = service
-user_domain_name = default
+user_domain_name = Default
 username = nova
 password = $senha
 [vnc]
@@ -1353,10 +1353,10 @@ api_servers = http://${controller[0]}:9292
 lock_path = /var/lib/nova/tmp
 [placement]
 region_name = RegionOne
-project_domain_name = default
+project_domain_name = Default
 project_name = service
 auth_type = password
-user_domain_name = default
+user_domain_name = Default
 #auth_url = http://${controller[0]}:5000/v3
 auth_url = http://${controller[0]}:5000
 username = placement
@@ -1427,7 +1427,7 @@ echo "Carregando variáveis de ambiente do OpenStack..."
 . admin-openrc
 
 echo "Criando usuário Neutron e atribuindo permissões..."
-openstack user create --domain default --password "$senha" neutron
+openstack user create --domain Default --password "$senha" neutron
 openstack role add --project service --user neutron admin
 
 echo "Criando serviço Neutron..."
@@ -1464,8 +1464,8 @@ www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = neutron
 password = $senha
@@ -1473,8 +1473,8 @@ password = $senha
 [nova]
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 region_name = RegionOne
 project_name = service
 username = nova
@@ -1488,8 +1488,8 @@ send_service_user_token = true
 auth_strategy = keystone
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = nova
 password = $senha
@@ -1618,7 +1618,7 @@ OPENSTACK_API_VERSIONS = {
     \"image\": 2,
     \"volume\": 3,
 }
-OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = \"default\"
+OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = \"Default\"
 OPENSTACK_KEYSTONE_DEFAULT_ROLE = \"user\"
 OPENSTACK_NEUTRON_NETWORK = {
     \"enable_router\": True,
@@ -1727,7 +1727,7 @@ echo "Carregando variáveis de ambiente do OpenStack..."
 . admin-openrc
 
 echo "Criando usuário Cinder e atribuindo permissões..."
-openstack user create --domain default --password "$senha" cinder
+openstack user create --domain Default --password "$senha" cinder
 openstack role add --project service --user cinder admin
 echo "criando serviço de storage do Cinder"
 openstack service create --name cinderv3 --description "OpenStack Block Storage" volumev3
@@ -1767,8 +1767,8 @@ www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = cinder
 password = admin
@@ -1780,8 +1780,8 @@ send_service_user_token = true
 auth_strategy = keystone
 auth_url = http://${controller[0]}:5000
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = nova
 password = $senha
@@ -1825,7 +1825,7 @@ echo "Carregando variáveis de ambiente do OpenStack..."
 . admin-openrc
 
 echo "criando usuário SWIFT no openstack..."
-openstack user create --domain default --password "$senha" swift
+openstack user create --domain Default --password "$senha" swift
 openstack role add --project service --user swift admin
 echo "criando serviço do SWIFT"
 openstack service create --name swift --description "OpenStack Object Storage" object-store
@@ -1863,8 +1863,8 @@ www_authenticate_uri = http://${controller[0]}:5000
 auth_url = http://${controller[0]}:5000
 memcached_servers = ${controller[0]}:11211
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = swift
 password = $senha
