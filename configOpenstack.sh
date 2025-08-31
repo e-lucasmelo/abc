@@ -10,7 +10,7 @@ openstack subnet create --network provider --allocation-pool start=$ip_inicio,en
 
 echo "criando rede selfservice..."
 openstack network create selfservice
-openstack subnet create --network selfservice --dns-nameserver 8.8.8.8 --gateway 10.0.0.1 --subnet-range 10.0.0.0/24 selfservice
+openstack subnet create --network selfservice --dns-nameserver 8.8.8.8 --gateway 192.168.0.1 --subnet-range 192.168.0.0/24 selfservice
 
 echo "criando roteador..."
 openstack router create router
