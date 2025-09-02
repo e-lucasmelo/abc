@@ -10,12 +10,6 @@ if [[ -z "$repositorio" || ! " ${valid_releases[@]} " =~ " $repositorio " ]]; th
     exit 1
 fi
 
-# Pega a versão completa, ex: "24.04"
-ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
-
-# Extrai apenas a parte antes do ponto, ex: "24"
-ubuntu_major_version=$(echo "$ubuntu_full_version" | cut -d '.' -f 1)
-
 if [[ ("$repositorio" == "dalmatian" || "$repositorio" == "epoxy") && "$ubuntu_major_version" != "24" ]]; then
     echo "Erro: O repositório $repositorio só é compatível com Ubuntu 24."
     exit 1

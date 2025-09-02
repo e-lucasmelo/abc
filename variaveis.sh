@@ -126,5 +126,11 @@ ip_gerencia(){
 host_array=($(ip_gerencia))
 host_temp=$(echo "$host" | sed 's/[0-9]*$//')
 
+# Pega a versão completa, ex: "24.04"
+ubuntu_full_version=$(grep '^VERSION_ID=' /etc/os-release | cut -d '"' -f 2)
+
+# Extrai apenas a parte antes do ponto, ex: "24"
+ubuntu_major_version=$(echo "$ubuntu_full_version" | cut -d '.' -f 1)
+
 # senha que será usada para todos os serviços do openstack
 senha="admin"
