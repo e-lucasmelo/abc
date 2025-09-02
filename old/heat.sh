@@ -1,9 +1,13 @@
 #!/bin/bash
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/variaveis.sh"
+#carrega as variáveis
+source variaveis.sh
+source admin-openrc
 
-source "$SCRIPT_DIR/admin-openrc"
+#echo "forçando instalação do python-zaqarclient==2.7.0..."
+#sudo python3 -m pip install python-zaqarclient==2.7.0 --break-system-packages &>/dev/null
+#echo "travando a versão instalada do python3-zaqarClient..."
+#sudo apt-mark hold python3-zaqarclient &>/dev/null
 
 # Configuração do banco de dados MySQL
 echo "Configuração do banco de dados MySQL para o Heat..."
@@ -57,7 +61,7 @@ openstack role create heat_stack_user
 
 # instalando os pacotes necessários
 echo "instalando os pacotes necessários..."
-sudo apt install heat-api heat-api-cfn heat-engine -y
+sudo apt install heat-api heat-api-cfn heat-engine -y &>/dev/null
 
 sudo bash -c "cat <<EOF > /etc/heat/heat.conf
 [DEFAULT]
@@ -93,12 +97,15 @@ sudo -u heat /bin/sh -c "heat-manage db_sync"
 
 sudo systemctl restart heat-api heat-api-cfn heat-engine
 
-source "$SCRIPT_DIR/admin-openrc"
+source admin-openrc
 openstack orchestration service list
 
 # instalando o heat no dashboard
 echo "instalando o heat no dashboard..."
-sudo apt install python3-heat-dashboard -y
+sudo apt install python3-heat-dashboard -y &>/dev/null
+
+sudo python3 -m pip install python-zaqarclient==2.7.0 --break-system-packages &>/dev/null
+sudo apt-mark hold python3-zaqarclient &>/dev/null
 
 # reiniciando o apache
 echo "reiniciando o apache2..."

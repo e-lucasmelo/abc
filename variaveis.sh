@@ -1,47 +1,96 @@
 #!/bin/bash
 
-#variaveis.sh
+#variaveis
 
 # insira o nome do usuário utilizado na configuração
-USUARIO="ubuntu"
+USUARIO=$USER
 
-# qual repsitório do openstack vai utilizar?
-# "zed", "antelope", "bobcat", "caracal","dalmatian", "epoxy"
+# qual host está configurando?
+# controller, compute1, compute2, compute3, block1, block2, block3,object1, object2, object3
+host="controller"
+
+# se for utilizar o host compute também como host block, digite 'sim'
+# valores validos: "sim" ou "nao"
+computeBlock="sim"
+
+# se for host block ou computeBlock, identifique o disco que será utilizado
+disk_block="vdb"
+
+# se for utilizar o host compute também como host object, digite 'sim'
+# valores validos: "sim" ou "nao"
+computeObject="sim"
+
+#se for host object ou computeObject, identifique o disco que será utilizado
+#no host controller deve colocar o mesmo nome de disco que será usado no object
+disk_object1="vdc"
+#disk_object2="sdc"
+
+# Qual repositório do openstack vai utilizar?
+# Ubuntu 22.04: zed, antelope, bobcat e caracal
+# Ubuntu 24.04: dalmatian e epoxy
 # com o repositorio caracal não vai funcionar o vpnaas neste script
+# Pode usar o epoxy e bobcat
 
-repositorio="epoxy"
+repositorio="dalmatian"
 
+# variável para validação das releases
 valid_releases=("zed" "antelope" "bobcat" "caracal" "dalmatian" "epoxy")
 
 # insira o caminho completo do arquivo netplan
 arquivoNetplan="/etc/netplan/50-cloud-init.yaml"
 
-# insira o tipo de rede de gerenciamento e provider
+# insira o tipo de conexão para a rede internet
 # "ethernets" ou "wifis"
-rede_ger="ethernets"
+tipoConexao="ethernets"
 
 # se for "wifis", insira o nome da rede e senha
 rede_wifi=
 senha_wifi=
 
-# insira a interface da rede de gerenciamento
-interface_ger="enp0s3" # interface de gerenciamento
 
-# insira as 3 primeiras partes do ip da sua rede de gerenciamento
-ip_ger="192.168.1"
+####################################################
+########## Interface de rede para internet #########
+####################################################
 
-# insira a parte final do ip do gateway da rede de gerencia
-gateway_gerencia="${ip_ger}.1"
+# insira a interface de rede que é utilizada para a conexão de internet
+interfaceInternet="ens3"
+
+# insira as 3 primeiras partes do ip da sua rede de internet
+# se a sua rede for '192.168.0.0/24', voce deve inserir: '192.168.0'
+ip_internet="172.16.1"
+
+# insira a parte final do ip do gateway da rede de internet
+# normalmente é o ip com final 1, se não for esse, altere.
+gateway_internet="${ip_internet}.1"
 
 # insira os ips dns separados por espaço
 dns=("181.213.132.2" "181.213.132.3")
 
-#insira a interface da rede provider
-interfaceProvider="enp0s8" # interface da rede provider do openstack
+
+#########################################################
+########## Interface de rede para gerenciamento #########
+#########################################################
+
+# Esta é a interface que os hosts controller, compute, block e object vão se comunicar
+# Se você não tiver uma interface específica para o gerenciamento, 
+# deixe a variável 'interface_ger' vazia que será configurada a interfaceInternet para o gerenciamento
+interface_ger="ens4" # interface de gerenciamento
+
+# insira as 3 primeiras partes do ip da sua rede de gerenciamento
+ip_ger="172.16.2"
+
+
+##########################################################
+########## Interface de rede para flat(provider) #########
+##########################################################
+
+# Insira a interface da rede provider
+# Essa é a interface que o openstack usará para a rede provider e IP´s FLAT
+interfaceProvider="ens5"
 
 # para a rede provider
 # insira as 3 primeiras partes do ip da sua rede que fornecerá os ips flutuantes
-ip_provider="192.168.0"
+ip_provider="10.0.0"
 
 #altere a parte final do ip
 #intervalo de ips flutuantes da rede provider
@@ -57,43 +106,25 @@ dns_provider="$ip_provider.1"
 #subnet da rede provider(deve ser igual a sua rede local)
 subnet_provider="$ip_provider.0/24"
 
-# essa interface adicional só é usado no virtualbox para acessar direto a vm em questão
-#insira o nome da interface de rede
-interfaceAdicional=""
-
-#insira as 3 primeiras partes do ip da sua rede bridge que é a sua rede local
-ip_Adic="192.168.0"
 
 
-# qual host está configurando?
-# controller, compute1, compute2, compute3, block1, block2, block3,object1, object2, object3
-host="controller"
+# variaveis para identificar os hosts e seus ips de gerenciamento e internet
+ #("host" "ip_host" "ip_internet")
+# Aqui está sendo esperado que o ip do controller termine com 11, ip do compute com 21, ip do block com 31 e ip do object com 41
+controller=("controller" "${ip_ger}.11" "${ip_internet}.11/24")
+compute1=("compute1" "${ip_ger}.21" "${ip_internet}.21/24")
+block1=("block1" "${ip_ger}.31" "${ip_internet}.31/24")
+object1=("object1" "${ip_ger}.41" "${ip_internet}.41/24")
 
-# se for host compute, vai usar também como host block?
-# digite "sim" ou "nao"
-computeBlock="nao"
+# Função que usa indireção para acessar o array correto
+ip_gerencia(){
+    # Variável indireta para pegar o array correto
+    local array_name="$host"  # O nome do host
+    eval "echo \${$array_name[@]}"  # Retorna toda a lista do array correspondente ao nome do host
+}
 
-# se for host block ou computeBlock, identifique o disco que será utilizado
-disk_block="sdb"
+host_array=($(ip_gerencia))
+host_temp=$(echo "$host" | sed 's/[0-9]*$//')
 
-# se for host compute, vai usar também como host object?
-# digite "sim" ou "nao"
-computeObject="nao"
-
-#se for host object ou computeObject, identifique o disco que será utilizado
-#no host controller deve colocar o mesmo nome de disco que será usado no object
-disk_object1="sdb"
-#disk_object2="sdc"
-
-#identifique qual(is) object storages serão instalados
-controller=("controller" "${ip_ger}.11" "${ip_Adic}.111/24") #("host" "ip_host" "ip_acesso_vm")
-compute1=("compute1" "${ip_ger}.21" "${ip_Adic}.121/24")
-compute2=("compute2" "${ip_ger}.22" "${ip_Adic}.122/24")
-compute3=("compute3" "${ip_ger}.23" "${ip_Adic}.123/24")
-block1=("block1" "${ip_ger}.31" "${ip_Adic}.131/24")
-block2=("block2" "${ip_ger}.32" "${ip_Adic}.132/24")
-block3=("block3" "${ip_ger}.33" "${ip_Adic}.133/24")
-object1=("object1" "${ip_ger}.41" "${ip_Adic}.141/24")
-object2=("object2" "${ip_ger}.42" "${ip_Adic}.142/24")
-object3=("object3" "${ip_ger}.43" "${ip_Adic}.143/24")
+# senha que será usada para todos os serviços do openstack
 senha="admin"

@@ -1,9 +1,11 @@
 #!/bin/bash
 
-source variaveis.sh
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/variaveis.sh"
+source "$SCRIPT_DIR/admin-openrc"
 
 echo "criando rede provider..."
-. admin-openrc
+
 openstack network create  --share --external --provider-physical-network provider --provider-network-type flat provider
 echo "alocando ip da rede provider..."
 openstack subnet create --network provider --allocation-pool start=$ip_inicio,end=$ip_fim --dns-nameserver $dns_provider --gateway $gateway_provider --subnet-range $subnet_provider provider

@@ -1,6 +1,8 @@
 #!/bin/bash
-echo "carregar variaveis.sh..."
-source variaveis.sh
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/variaveis.sh"
+source "$SCRIPT_DIR/admin-openrc"
 
 echo "acessar o server object e executar comandos..."
 sudo mv  /tmp/swift.conf /tmp/account.ring.gz /tmp/container.ring.gz /tmp/object.ring.gz /etc/swift

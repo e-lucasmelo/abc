@@ -1,9 +1,8 @@
 #!/bin/bash
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/variaveis.sh"
-
-source "$SCRIPT_DIR/admin-openrc"
+#carrega as variáveis
+source variaveis.sh
+source admin-openrc
 
 # Configuração do banco de dados MySQL
 echo "Configuração do banco de dados MySQL para o Designate..."
@@ -33,11 +32,11 @@ openstack endpoint create --region RegionOne dns public http://${controller[0]}:
 
 # instalando o designate e bind9
 echo "Instalando o designate e bind9..."
-sudo apt install designate bind9 bind9utils bind9-doc -y
+sudo apt install designate bind9 bind9utils bind9-doc -y &>/dev/null
 
 # criando rndc key
 echo "criando rndc key..."
-sudo rndc-confgen -a -k designate -c /etc/bind/rndc.key
+sudo rndc-confgen -a -k designate -c /etc/bind/rndc.key &>/dev/null
 
 # criando arquivo named.conf.options
 echo "criando arquivo /etc/bind/named.conf.options..."
@@ -103,12 +102,12 @@ EOF"
 
 # atualizando banco de dados do designate
 echo  "atualizando banco de dados do designate..."
-sudo -u designate /bin/sh -c "designate-manage database sync"
+sudo -u designate /bin/sh -c "designate-manage database sync" &>/dev/null
 
 # iniciando serviços do designate
 echo "iniciando e habilitando no boot os serviços do designate"
-sudo systemctl start designate-central designate-api
-sudo systemctl enable designate-central designate-api
+sudo systemctl start designate-central designate-api &>/dev/null
+sudo systemctl enable designate-central designate-api &>/dev/null
 
 # criando o arquivo pools.yaml
 echo "criando o arquivo /etc/designate/pools.yaml"
@@ -160,24 +159,24 @@ EOF"
 
 # atualização do banco de dados do designate pool
 echo "atualizando o banco de dados do designate pool"
-sudo -u designate /bin/sh -c "designate-manage pool update"
+sudo -u designate /bin/sh -c "designate-manage pool update" &>/dev/null
 
 # instalando o designate-worker designate-producer designate-mdns
 echo "instalando o designate-worker designate-producer designate-mdns..."
-sudo apt install designate-worker designate-producer designate-mdns -y
+sudo apt install designate-worker designate-producer designate-mdns -y &>/dev/null
 
 # iniciando serviços designate-worker designate-producer designate-mdns
 echo "iniciando e habilitando no boot os serviços designate-worker designate-producer designate-mdns..."
-sudo systemctl start designate-worker designate-producer designate-mdns
-sudo systemctl enable designate-worker designate-producer designate-mdns
+sudo systemctl start designate-worker designate-producer designate-mdns &>/dev/null
+sudo systemctl enable designate-worker designate-producer designate-mdns &>/dev/null
 
 # instalando o python3-designate-dashboard
 echo "instalando o python3-designate-dashboard..."
-sudo apt install python3-designate-dashboard -y
+sudo apt install python3-designate-dashboard -y &>/dev/null
 
 # reiniciando o apache para o Horizon
 echo "reiniciando apache para o Horizon"
-sudo systemctl restart apache2
+sudo systemctl restart apache2 &>/dev/null
 
 echo "reiniciando os serviços designate e named"
 sudo systemctl restart designate-agent designate-worker designate-central designate-producer designate-mdns named

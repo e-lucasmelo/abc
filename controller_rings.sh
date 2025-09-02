@@ -1,7 +1,9 @@
 #!/bin/bash
-echo "carregar variaveis.sh..."
-source variaveis.sh
-source admin-openrc
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/variaveis.sh"
+source "$SCRIPT_DIR/admin-openrc"
+
 
 if [ "$computeObject" = "sim" ];then
 ip_object1="${compute1[1]}"

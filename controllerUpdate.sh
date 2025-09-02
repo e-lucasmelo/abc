@@ -1,7 +1,8 @@
 #!/bin/bash
 
-echo "Carregando variáveis de ambiente do OpenStack..."
-. admin-openrc
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/variaveis.sh"
+source "$SCRIPT_DIR/admin-openrc"
 
 echo "verificando os novos hosts compute..."
 # sudo nova-manage cell_v2 discover_hosts --verbose
