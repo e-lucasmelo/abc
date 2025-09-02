@@ -2,6 +2,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/variaveis.sh"
+source "$SCRIPT_DIR/admin-openrc"
 
 if [ $host_temp = "controller" ]; then
 echo "configurando o SWIFT..."
@@ -126,11 +127,8 @@ use = egg:swift#listing_formats
 [filter:symlink]
 use = egg:swift#symlink
 EOF"
-
 sudo systemctl restart neutron* apach* open*
-
 fi
-
 
 if [[ "$host_temp" = "object" || ( "$computeObject" = "sim" && "$host_temp" = "compute" ) ]]; then
 echo "Instalando xfsprogs e rsync..."
